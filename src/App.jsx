@@ -22,17 +22,23 @@ function Chatbot() {
     { role: "ai", text: "Hi, I'm Orken AI. How can I help?" },
   ]);
 
-  function send(t = msg) {
-    if (!t.trim()) return;
-    setItems((x) => [
-      ...x,
-      { role: "user", text: t },
-      {
-        role: "ai",
-        text: "I can help explain Orken's AI agents, automation, integrations, and delivery process.",
-      },
-    ]);
+  async function send(t = msg) {
+    const question = t.trim();
+    if (!question) return;
+    setItems((x) => [...x, { role: "user", text: question }]);
     setMsg("");
+    try {
+      const { data, error } = await supabase.functions.invoke("chat-with-knowledge", {
+        body: {
+          message: question,
+          history: items.slice(-6),
+        },
+      });
+      if (error) throw error;
+      setItems((x) => [...x, { role: "ai", text: data?.answer || "I don't have that information in the business knowledge yet." }]);
+    } catch (error) {
+      setItems((x) => [...x, { role: "ai", text: "I’m unable to access the business knowledge right now." }]);
+    }
   }
 
   return (
@@ -181,14 +187,30 @@ function AdminDashboard({ user, onLogout }) {
       setSaving(false);
       return;
     }
-    const { error: rowError } = await supabase.from("knowledge_documents").insert({
+    const { data: document, error: rowError } = await supabase.from("knowledge_documents").insert({
       user_id: user.id,
-      file_name: file.name,
+      file_name: uploadFileObject.name,
       file_path: path,
-      file_type: file.type || "unknown",
+      file_type: uploadFileObject.type || "unknown",
       file_size: uploadFileObject.size,
+    }).select("id").single();
+
+    if (rowError) {
+      setMessage(rowError.message);
+      setSaving(false);
+      return;
+    }
+
+    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document", {
+      body: { document_id: document.id, file_path: path },
     });
-    setMessage(rowError ? rowError.message : "File uploaded.");
+
+    if (indexError || indexed?.error) {
+      setMessage(indexed?.error || indexError?.message || "File uploaded, but its text could not be indexed.");
+    } else {
+      setMessage("File uploaded and added to the AI knowledge base.");
+    }
+
     setFile(null);
     e.target.reset();
     await loadDashboard();
