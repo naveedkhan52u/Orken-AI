@@ -1,5 +1,30 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
+async function extractPdfText(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+  const pages = [];
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    const page = await pdf.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const text = content.items.map((item) => ("str" in item ? item.str : "")).join(" ").replace(/\\s+/g, " ").trim();
+    if (text) pages.push(`Page ${pageNumber}: ${text}`);
+    page.cleanup();
+  }
+  return pages.join("\\n\\n").trim();
+}
+
+async function extractKnowledgeText(file) {
+  const ext = file.name.toLowerCase().split(".").pop() || "";
+  if (ext === "pdf" || file.type === "application/pdf") return extractPdfText(file);
+  if (["txt", "md", "csv", "json"].includes(ext) || file.type.startsWith("text/")) return (await file.text()).trim();
+  return "";
+}
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || "https://dsvqneushvuunpjqookz.supabase.co",
@@ -179,36 +204,33 @@ function AdminDashboard({ user, onLogout }) {
       }
     }
 
-    const safeName = uploadFileObject.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-    const path = user.id + "/" + Date.now() + "-" + safeName;
-    const { error: uploadError } = await supabase.storage.from("knowledge-documents").upload(path, uploadFileObject, { upsert: false });
-    if (uploadError) {
-      setMessage(uploadError.message);
-      setSaving(false);
-      return;
-    }
-    const { data: document, error: rowError } = await supabase.from("knowledge_documents").insert({
-      user_id: user.id,
-      file_name: uploadFileObject.name,
-      file_path: path,
-      file_type: uploadFileObject.type || "unknown",
-      file_size: uploadFileObject.size,
-    }).select("id").single();
+    try {
+      const knowledgeText = await extractKnowledgeText(uploadFileObject);
+      if (!knowledgeText) throw new Error("No readable text was found in this file. The PDF may be scanned/image-only.");
+      if (knowledgeText.length > 500000) throw new Error("This file contains too much text. Please split it into smaller files.");
 
-    if (rowError) {
-      setMessage(rowError.message);
-      setSaving(false);
-      return;
-    }
+      const safeName = uploadFileObject.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const path = user.id + "/" + Date.now() + "-" + safeName;
+      const { error: uploadError } = await supabase.storage.from("knowledge-documents").upload(path, uploadFileObject, { upsert: false });
+      if (uploadError) throw uploadError;
 
-    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v3", {
-      body: { document_id: document.id, file_path: path },
-    });
+      const { error: rowError } = await supabase.from("knowledge_documents").insert({
+        user_id: user.id,
+        file_name: uploadFileObject.name,
+        file_path: path,
+        file_type: uploadFileObject.type || "unknown",
+        file_size: uploadFileObject.size,
+        content: knowledgeText,
+      });
 
-    if (indexError || indexed?.error) {
-      setMessage(indexed?.error || indexError?.message || "File uploaded, but its text could not be indexed.");
-    } else {
-      setMessage("File uploaded and added to the AI knowledge base.");
+      if (rowError) {
+        await supabase.storage.from("knowledge-documents").remove([path]);
+        throw rowError;
+      }
+
+      setMessage(`File uploaded and indexed: ${knowledgeText.length.toLocaleString()} characters.`);
+    } catch (error) {
+      setMessage(error?.message || "The file could not be processed.");
     }
 
     setFile(null);
@@ -220,11 +242,17 @@ function AdminDashboard({ user, onLogout }) {
   async function reindexDoc(doc) {
     setSaving(true);
     setMessage("");
-    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v3", {
-      body: { document_id: doc.id, file_path: doc.file_path },
-    });
-    if (indexError || indexed?.error) setMessage(indexed?.error || indexError?.message || "The file could not be indexed.");
-    else setMessage(`Knowledge indexed successfully: ${indexed.characters.toLocaleString()} characters.`);
+    try {
+      const { data, error } = await supabase.storage.from("knowledge-documents").download(doc.file_path);
+      if (error || !data) throw error || new Error("Could not download the stored file.");
+      const knowledgeText = await extractKnowledgeText(new File([data], doc.file_name, { type: doc.file_type || data.type }));
+      if (!knowledgeText) throw new Error("No readable text was found. The PDF may be scanned/image-only.");
+      const { error: updateError } = await supabase.from("knowledge_documents").update({ content: knowledgeText }).eq("id", doc.id).eq("user_id", user.id);
+      if (updateError) throw updateError;
+      setMessage(`Knowledge indexed successfully: ${knowledgeText.length.toLocaleString()} characters.`);
+    } catch (error) {
+      setMessage(error?.message || "The file could not be indexed.");
+    }
     await loadDashboard();
     setSaving(false);
   }
@@ -314,11 +342,11 @@ function AdminDashboard({ user, onLogout }) {
 
         {section === "data" && (
           <div className="data-layout">
-            <div className="panel"><span className="panel-label">KNOWLEDGE BASE</span><h2>Add business data</h2><p>Upload PDF, TXT, MD, CSV, or JSON files. Text is extracted and added to the AI knowledge base automatically.</p>
+            <div className="panel"><span className="panel-label">KNOWLEDGE BASE</span><h2>Add business data</h2><p>Upload PDF, TXT, MD, CSV, or JSON files. Text is extracted in the browser and added to the AI knowledge base automatically.</p>
               <form className="upload-form" onSubmit={uploadFile}><input type="file" accept=".pdf,.txt,.md,.csv,.json" onChange={(e) => setFile(e.target.files?.[0] || null)} required /><button className="auth-submit" disabled={saving}>{saving ? "Uploading..." : "Upload file"}</button></form>
               {message && <p className="form-message">{message}</p>}
             </div>
-            <div className="panel"><span className="panel-label">UPLOADED FILES</span><h2>Your files</h2>{docs.length === 0 ? <p className="empty">No files uploaded.</p> : <div className="doc-list">{docs.map((doc) => <div className="doc-row" key={doc.id}><div><b>{doc.file_name}</b><small>{doc.file_type} · {Math.round(doc.file_size / 1024)} KB</small></div><div className="faq-actions"><button className="edit-btn" disabled={saving} onClick={() => reindexDoc(doc)}>Re-index</button><button className="delete-btn" disabled={saving} onClick={() => deleteDoc(doc)}>Delete</button></div></div>)}</div>}</div>
+            <div className="panel"><span className="panel-label">UPLOADED FILES</span><h2>Your files</h2>{docs.length === 0 ? <p className="empty">No files uploaded.</p> : <div className="doc-list">{docs.map((doc) => <div className="doc-row" key={doc.id}><div><b>{doc.file_name}</b><small>{doc.file_type} · {Math.round(doc.file_size / 1024)} KB · {doc.content ? `${doc.content.length.toLocaleString()} chars indexed` : "not indexed"}</small></div><div className="faq-actions"><button className="edit-btn" disabled={saving} onClick={() => reindexDoc(doc)}>Re-index</button><button className="delete-btn" disabled={saving} onClick={() => deleteDoc(doc)}>Delete</button></div></div>)}</div>}</div>
           </div>
         )}
 
