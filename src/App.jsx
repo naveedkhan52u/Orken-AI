@@ -108,19 +108,23 @@ function AdminDashboard({ user, onLogout }) {
   const [profile, setProfile] = useState({ full_name: "", email: user.email || "" });
   const [leads, setLeads] = useState([]);
   const [docs, setDocs] = useState([]);
+  const [faqs, setFaqs] = useState([]);
+  const [faqForm, setFaqForm] = useState({ id: null, question: "", answer: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
 
   async function loadDashboard() {
-    const [{ data: p }, { data: l }, { data: d }] = await Promise.all([
+    const [{ data: p }, { data: l }, { data: d }, { data: f }] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).single(),
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("knowledge_documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("faqs").select("*").order("created_at", { ascending: false }),
     ]);
     setProfile({ full_name: p?.full_name || "", email: user.email || "" });
     setLeads(l || []);
     setDocs(d || []);
+    setFaqs(f || []);
   }
 
   useEffect(() => { loadDashboard(); }, [user.id]);
@@ -169,6 +173,28 @@ function AdminDashboard({ user, onLogout }) {
     setSaving(false);
   }
 
+  async function saveFaq(e) {
+    e.preventDefault();
+    setSaving(true);
+    setMessage("");
+    const payload = { question: faqForm.question.trim(), answer: faqForm.answer.trim(), updated_at: new Date().toISOString() };
+    const result = faqForm.id
+      ? await supabase.from("faqs").update(payload).eq("id", faqForm.id)
+      : await supabase.from("faqs").insert(payload);
+    setMessage(result.error ? result.error.message : faqForm.id ? "FAQ updated." : "FAQ added.");
+    if (!result.error) setFaqForm({ id: null, question: "", answer: "" });
+    await loadDashboard();
+    setSaving(false);
+  }
+
+  async function deleteFaq(id) {
+    setSaving(true);
+    const { error } = await supabase.from("faqs").delete().eq("id", id);
+    setMessage(error ? error.message : "FAQ deleted.");
+    await loadDashboard();
+    setSaving(false);
+  }
+
   async function deleteLead(id) {
     await supabase.from("leads").delete().eq("id", id);
     await loadDashboard();
@@ -190,13 +216,14 @@ function AdminDashboard({ user, onLogout }) {
         <button className={section === "overview" ? "active" : ""} onClick={() => setSection("overview")}>Overview</button>
         <button className={section === "leads" ? "active" : ""} onClick={() => setSection("leads")}>Lead Generation</button>
         <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>Add Data</button>
+        <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>
         <button className={section === "profile" ? "active" : ""} onClick={() => setSection("profile")}>Profile Settings</button>
         <button className="logout" onClick={logout}>Sign out</button>
       </aside>
 
       <main className="dashboard-main">
         <header className="dashboard-header">
-          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : "Profile Settings"}</h1></div>
+          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : section === "faqs" ? "FAQs" : "Profile Settings"}</h1></div>
           <div className="dashboard-user">{profile.full_name || user.email}</div>
         </header>
 
@@ -227,6 +254,34 @@ function AdminDashboard({ user, onLogout }) {
               {message && <p className="form-message">{message}</p>}
             </div>
             <div className="panel"><span className="panel-label">UPLOADED FILES</span><h2>Your files</h2>{docs.length === 0 ? <p className="empty">No files uploaded.</p> : <div className="doc-list">{docs.map((doc) => <div className="doc-row" key={doc.id}><div><b>{doc.file_name}</b><small>{doc.file_type} · {Math.round(doc.file_size / 1024)} KB</small></div><button className="delete-btn" onClick={() => deleteDoc(doc)}>Delete</button></div>)}</div>}</div>
+          </div>
+        )}
+
+        {section === "faqs" && (
+          <div className="data-layout">
+            <div className="panel">
+              <span className="panel-label">{faqForm.id ? "EDIT FAQ" : "ADD FAQ"}</span>
+              <h2>{faqForm.id ? "Edit FAQ" : "Create a FAQ"}</h2>
+              <form className="profile-panel" onSubmit={saveFaq}>
+                <label>Question<input value={faqForm.question} onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })} placeholder="e.g. What services do you provide?" required /></label>
+                <label>Answer<textarea value={faqForm.answer} onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })} placeholder="Write the answer..." rows="6" required /></label>
+                <div className="faq-actions">
+                  <button className="auth-submit" disabled={saving}>{saving ? "Saving..." : faqForm.id ? "Update FAQ" : "Add FAQ"}</button>
+                  {faqForm.id && <button type="button" className="delete-btn" onClick={() => setFaqForm({ id: null, question: "", answer: "" })}>Cancel</button>}
+                </div>
+              </form>
+              {message && <p className="form-message">{message}</p>}
+            </div>
+            <div className="panel">
+              <span className="panel-label">FAQ KNOWLEDGE</span>
+              <h2>Saved FAQs</h2>
+              {faqs.length === 0 ? <p className="empty">No FAQs added yet.</p> : <div className="doc-list">{faqs.map((faq) => (
+                <div className="doc-row faq-row" key={faq.id}>
+                  <div><b>{faq.question}</b><small>{faq.answer}</small></div>
+                  <div className="faq-actions"><button className="edit-btn" onClick={() => setFaqForm({ id: faq.id, question: faq.question, answer: faq.answer })}>Edit</button><button className="delete-btn" onClick={() => deleteFaq(faq.id)}>Delete</button></div>
+                </div>
+              ))}</div>}
+            </div>
           </div>
         )}
 
