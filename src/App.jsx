@@ -139,7 +139,9 @@ function AdminDashboard({ user, onLogout }) {
   const [profile, setProfile] = useState({ full_name: "", email: user.email || "" });
   const [leads, setLeads] = useState([]);
   const [docs, setDocs] = useState([]);
-  const [faqs, setFaqs] = useState([]);\n  const [services, setServices] = useState([]);\n  const [serviceForm, setServiceForm] = useState({ id: null, name: "", description: "" });
+  const [faqs, setFaqs] = useState([]);
+const [services, setServices] = useState([]);
+const [serviceForm, setServiceForm] = useState({ id: null, name: "", description: "" });
   const [faqForm, setFaqForm] = useState({ id: null, question: "", answer: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -150,7 +152,8 @@ function AdminDashboard({ user, onLogout }) {
       supabase.from("profiles").select("full_name").eq("id", user.id).single(),
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("knowledge_documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("faqs").select("*").order("created_at", { ascending: false }),\n      supabase.from("services").select("*").order("created_at", { ascending: false }),
+      supabase.from("faqs").select("*").order("created_at", { ascending: false }),
+supabase.from("services").select("*").order("created_at", { ascending: false }),
     ]);
     setProfile({ full_name: p?.full_name || "", email: user.email || "" });
     setLeads(l || []);
@@ -331,7 +334,8 @@ function AdminDashboard({ user, onLogout }) {
         <button className={section === "overview" ? "active" : ""} onClick={() => setSection("overview")}>Overview</button>
         <button className={section === "leads" ? "active" : ""} onClick={() => setSection("leads")}>Lead Generation</button>
         <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>Add Data</button>
-        <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>\n        <button className={section === "services" ? "active" : ""} onClick={() => setSection("services")}>Add Services</button>
+        <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>
+<button className={section === "services" ? "active" : ""} onClick={() => setSection("services")}>Add Services</button>
         <button className={section === "profile" ? "active" : ""} onClick={() => setSection("profile")}>Profile Settings</button>
         <button className="logout" onClick={logout}>Sign out</button>
       </aside>
