@@ -61,6 +61,13 @@ function Chatbot() {
               send();
             }}
           >
+            <button
+              type="button"
+              className="mic-icon"
+              aria-label="Use microphone"
+            >
+              🎙
+            </button>
             <input
               value={msg}
               onChange={(e) => setMsg(e.target.value)}
