@@ -16,8 +16,8 @@
     "position:fixed",
     "right:0",
     "bottom:0",
-    "width:78px",
-    "height:78px",
+    "width:100px",
+    "height:100px",
     "border:0",
     "background:transparent",
     "z-index:2147483647",
@@ -30,8 +30,9 @@
 
   function setOpen(open) {
     const mobile = window.innerWidth <= 600;
-    frame.style.width = open ? (mobile ? "100vw" : "390px") : "78px";
-    frame.style.height = open ? (mobile ? "100vh" : "540px") : "78px";
+    frame.dataset.open = String(open);
+    frame.style.width = open ? (mobile ? "100vw" : "390px") : "100px";
+    frame.style.height = open ? (mobile ? "100vh" : "540px") : "100px";
   }
 
   window.addEventListener("message", (event) => {
