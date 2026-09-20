@@ -48,7 +48,7 @@ function Chatbot() {
         <div className="window">
           <header>
             <b>Orken AI</b>
-            <span>CLAUDE-POWERED · LIVE</span>
+            <span>GROQ-POWERED · LIVE</span>
           </header>
           <main>
             {items.map((x, i) => (
@@ -201,7 +201,7 @@ function AdminDashboard({ user, onLogout }) {
       return;
     }
 
-    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document", {
+    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v2", {
       body: { document_id: document.id, file_path: path },
     });
 
@@ -213,6 +213,18 @@ function AdminDashboard({ user, onLogout }) {
 
     setFile(null);
     e.target.reset();
+    await loadDashboard();
+    setSaving(false);
+  }
+
+  async function reindexDoc(doc) {
+    setSaving(true);
+    setMessage("");
+    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v2", {
+      body: { document_id: doc.id, file_path: doc.file_path },
+    });
+    if (indexError || indexed?.error) setMessage(indexed?.error || indexError?.message || "The file could not be indexed.");
+    else setMessage(`Knowledge indexed successfully: ${indexed.characters.toLocaleString()} characters.`);
     await loadDashboard();
     setSaving(false);
   }
@@ -302,11 +314,11 @@ function AdminDashboard({ user, onLogout }) {
 
         {section === "data" && (
           <div className="data-layout">
-            <div className="panel"><span className="panel-label">KNOWLEDGE BASE</span><h2>Add business data</h2><p>Upload PDFs, TXT, DOC, DOCX and other reference files for your future AI knowledge pipeline.</p>
-              <form className="upload-form" onSubmit={uploadFile}><input type="file" accept=".pdf,.txt,.doc,.docx,.md,.csv,.json" onChange={(e) => setFile(e.target.files?.[0] || null)} required /><button className="auth-submit" disabled={saving}>{saving ? "Uploading..." : "Upload file"}</button></form>
+            <div className="panel"><span className="panel-label">KNOWLEDGE BASE</span><h2>Add business data</h2><p>Upload PDF, TXT, MD, CSV, or JSON files. Text is extracted and added to the AI knowledge base automatically.</p>
+              <form className="upload-form" onSubmit={uploadFile}><input type="file" accept=".pdf,.txt,.md,.csv,.json" onChange={(e) => setFile(e.target.files?.[0] || null)} required /><button className="auth-submit" disabled={saving}>{saving ? "Uploading..." : "Upload file"}</button></form>
               {message && <p className="form-message">{message}</p>}
             </div>
-            <div className="panel"><span className="panel-label">UPLOADED FILES</span><h2>Your files</h2>{docs.length === 0 ? <p className="empty">No files uploaded.</p> : <div className="doc-list">{docs.map((doc) => <div className="doc-row" key={doc.id}><div><b>{doc.file_name}</b><small>{doc.file_type} · {Math.round(doc.file_size / 1024)} KB</small></div><button className="delete-btn" onClick={() => deleteDoc(doc)}>Delete</button></div>)}</div>}</div>
+            <div className="panel"><span className="panel-label">UPLOADED FILES</span><h2>Your files</h2>{docs.length === 0 ? <p className="empty">No files uploaded.</p> : <div className="doc-list">{docs.map((doc) => <div className="doc-row" key={doc.id}><div><b>{doc.file_name}</b><small>{doc.file_type} · {Math.round(doc.file_size / 1024)} KB</small></div><div className="faq-actions"><button className="edit-btn" disabled={saving} onClick={() => reindexDoc(doc)}>Re-index</button><button className="delete-btn" disabled={saving} onClick={() => deleteDoc(doc)}>Delete</button></div></div>)}</div>}</div>
           </div>
         )}
 
