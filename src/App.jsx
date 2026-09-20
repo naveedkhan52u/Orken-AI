@@ -41,138 +41,66 @@ const agents = [
 ];
 
 function Chatbot() {
-  const [open, setOpen] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [items, setItems] = useState([
-    { role: "ai", text: "Hi, I'm Orken AI. How can I help?" },
-  ]);
-  const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef(null);
-  const listeningRef = useRef(false);
-  const [voiceError, setVoiceError] = useState("");
+  const [open,setOpen]=useState(false),[msg,setMsg]=useState("");
+  const [items,setItems]=useState([{role:"ai",text:"Hi, I'm Orken AI. How can I help?"}]);
+  const [isListening,setIsListening]=useState(false),[voiceError,setVoiceError]=useState("");
+  const [contactOpen,setContactOpen]=useState(false),[leadMessage,setLeadMessage]=useState("");
+  const recognitionRef=useRef(null),listeningRef=useRef(false);
 
-  async function send(t = msg) {
-    const question = t.trim();
-    if (!question) return;
-    setItems((x) => [...x, { role: "user", text: question }]);
-    setMsg("");
-    try {
-      const { data, error } = await supabase.functions.invoke("chat-with-knowledge", {
-        body: {
-          message: question,
-          history: items.slice(-6),
-        },
-      });
-      if (error) throw error;
-      setItems((x) => [...x, { role: "ai", text: data?.answer || "I don't have that information in the business knowledge yet." }]);
-    } catch (error) {
-      setItems((x) => [...x, { role: "ai", text: "I’m unable to access the business knowledge right now." }]);
-    }
+  async function send(t=msg){
+    const question=t.trim(); if(!question)return;
+    setItems(x=>[...x,{role:"user",text:question}]); setMsg(""); setLeadMessage("");
+    try{
+      const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:null}});
+      if(error)throw error;
+      if(data?.found===false||data?.fallback===true||!data?.answer){
+        setItems(x=>[...x,{role:"ai",text:"I can only assist about Orken AI and its services. I couldn't find an answer to that question."}]);
+        setContactOpen(true);
+      }else setItems(x=>[...x,{role:"ai",text:data.answer}]);
+    }catch(error){setItems(x=>[...x,{role:"ai",text:"I’m unable to access the business knowledge right now."}])}
   }
-
-  function startVoiceInput() {
+  async function submitLead(e){
+    e.preventDefault(); const f=e.currentTarget;
+    const {error}=await supabase.from("leads").insert({name:f.name.value.trim(),email:f.email.value.trim(),phone:f.whatsapp.value.trim()||null,message:f.subject.value.trim(),source:"Orken AI website chatbot human support",status:"new"});
+    setLeadMessage(error?"Unable to submit right now. Please try again.":"Thank you. Our team will contact you.");
+    if(!error)f.reset();
+  }
+  function startVoiceInput(){
     setVoiceError("");
-    if (listeningRef.current) {
-      try { recognitionRef.current?.stop(); } catch {}
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setVoiceError("Voice input is not supported in this browser. Try Chrome or Edge.");
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        listeningRef.current = true;
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        let transcript = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        setMsg(transcript.trim());
-      };
-
-      recognition.onerror = (event) => {
-        listeningRef.current = false;
-        setIsListening(false);
-        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-          setVoiceError("Microphone permission was blocked. Allow microphone access and try again.");
-        } else if (event.error !== "aborted") {
-          setVoiceError("Voice input could not be started. Please try again.");
-        }
-      };
-
-      recognition.onend = () => {
-        listeningRef.current = false;
-        setIsListening(false);
-        recognitionRef.current = null;
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch {
-      listeningRef.current = false;
-      setIsListening(false);
-      recognitionRef.current = null;
-      setVoiceError("Voice input could not be started. Please try again.");
-    }
+    if(listeningRef.current){try{recognitionRef.current?.stop()}catch{};return}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){setVoiceError("Voice input is not supported in this browser. Try Chrome or Edge.");return}
+    try{
+      const r=new SR(); r.lang="en-US"; r.continuous=false;r.interimResults=true;r.maxAlternatives=1;
+      r.onstart=()=>{listeningRef.current=true;setIsListening(true)}; r.onresult=e=>{let t="";for(let i=e.resultIndex;i<e.results.length;i++)t+=e.results[i][0].transcript;setMsg(t.trim())};
+      r.onerror=e=>{listeningRef.current=false;setIsListening(false);if(e.error!=="aborted")setVoiceError(e.error==="not-allowed"?"Microphone permission was blocked. Allow microphone access and try again.":"Voice input could not be started. Please try again.")};
+      r.onend=()=>{listeningRef.current=false;setIsListening(false);recognitionRef.current=null}; recognitionRef.current=r;r.start();
+    }catch{listeningRef.current=false;setIsListening(false);recognitionRef.current=null;setVoiceError("Voice input could not be started. Please try again.")}
   }
-
-  useEffect(() => {
-    return () => {
-      listeningRef.current = false;
-      try { recognitionRef.current?.stop(); } catch {}
-      recognitionRef.current = null;
-    };
-  }, []);
-
-  return (
-    <div className="chat">
-      <button className="launcher" onClick={() => setOpen(!open)} aria-label="Open Orken AI chat" />
-      {open && (
-        <div className="window">
-          <header>
-            <b>Orken AI</b>
-            <span>GROQ-POWERED · LIVE</span>
-          </header>
-          <main>
-            {items.map((x, i) => (
-              <p key={i} className={x.role === "user" ? "user-message" : "ai-message"}>
-                {x.text}
-              </p>
-            ))}
-          </main>
-          <div className="suggest">
-            <button onClick={() => send("What do you build?")}>What do you build?</button>
-            <button onClick={() => send("How long does it take?")}>How long?</button>
-          </div>
-          <form onSubmit={(e) => { e.preventDefault(); send(); }}>
-            <button type="button" className={`mic-icon${isListening ? " listening" : ""}`} onClick={startVoiceInput} aria-label={isListening ? "Stop microphone" : "Use microphone"} title={isListening ? "Stop listening" : "Voice input"} disabled={false}>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            </button>
-            <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={isListening ? "Listening..." : "Ask Orken AI..."} aria-label="Message" />
-            <button aria-label="Send message" className="send-icon" type="submit">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-6.7 18-3.8-7.5L3 9.7 21 3Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-          </form>
-          {voiceError && <div className="voice-error" role="status">{voiceError}</div>}
-        </div>
-      )}
-    </div>
-  );
+  useEffect(()=>()=>{listeningRef.current=false;try{recognitionRef.current?.stop()}catch{};recognitionRef.current=null},[]);
+  return <div className="chat">
+    <button className="launcher" onClick={()=>setOpen(!open)} aria-label="Open Orken AI chat"/>
+    {open&&<div className="window">
+      <header><b>Orken AI</b><span>GROQ-POWERED · LIVE</span></header>
+      <main>{items.map((x,i)=><p key={i} className={x.role==="user"?"user-message":"ai-message"}>{x.text}</p>)}</main>
+      <div className="suggest"><button onClick={()=>send("What do you build?")}>What do you build?</button><button onClick={()=>send("How long does it take?")}>How long?</button></div>
+      {contactOpen&&<div className="chat-contact">
+        <div>Contact our team for human support</div>
+        <form onSubmit={submitLead}>
+          <input name="name" placeholder="Name" required/><input name="email" type="email" placeholder="Email" required/><input name="whatsapp" placeholder="WhatsApp (optional)"/><input name="subject" placeholder="Subject" required/>
+          <div><button type="button" onClick={()=>setContactOpen(false)}>Close</button><button type="submit">Submit</button></div>
+          {leadMessage&&<small>{leadMessage}</small>}
+        </form>
+      </div>}
+      <form onSubmit={e=>{e.preventDefault();send()}}>
+        <button type="button" className={`mic-icon${isListening?" listening":""}`} onClick={startVoiceInput} aria-label={isListening?"Stop microphone":"Use microphone"} title={isListening?"Stop listening":"Voice input"}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8"/></svg></button>
+        <input value={msg} onChange={e=>setMsg(e.target.value)} placeholder={isListening?"Listening...":"Ask Orken AI..."} aria-label="Message"/>
+        <button aria-label="Send message" className="send-icon" type="submit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-6.7 18-3.8-7.5L3 9.7 21 3Z"/></svg></button>
+      </form>
+      {voiceError&&<div className="voice-error">{voiceError}</div>}
+    </div>}
+  </div>
 }
-
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
