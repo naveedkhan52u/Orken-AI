@@ -40,7 +40,7 @@ const agents = [
   "Workflow Automation",
 ];
 
-function Chatbot() {
+function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded = false }) {
   const [open,setOpen]=useState(false),[msg,setMsg]=useState("");
   const [items,setItems]=useState([{role:"ai",text:"Hi, I'm Orken AI. How can I help?"}]);
   const [isListening,setIsListening]=useState(false),[voiceError,setVoiceError]=useState("");
@@ -51,7 +51,7 @@ function Chatbot() {
     const question=t.trim(); if(!question)return;
     setItems(x=>[...x,{role:"user",text:question}]); setMsg(""); setLeadMessage("");
     try{
-      const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:"4f779903-738c-4dfe-bcc2-201ca06253f2"}});
+      const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:businessId}});
       if(error)throw error;
       if(data?.found===false||data?.fallback===true||!data?.answer){
         setItems(x=>[...x,{role:"ai",text:"I can only assist about Orken AI and its services. I couldn't find an answer to that question."}]);
@@ -471,6 +471,11 @@ function AppRouter() {
 
   if (loading) return <div className="loading-screen">Loading Orken AI...</div>;
   if (window.location.pathname === "/admin") return user ? <AdminDashboard user={user} onLogout={() => setUser(null)} /> : <Login onLogin={setUser} />;
+  if (window.location.pathname === "/embed") {
+    const businessId = new URLSearchParams(window.location.search).get("business_id");
+    if (!businessId) return <div className="embed-error">Missing business_id.</div>;
+    return <Chatbot businessId={businessId} embedded />;
+  }
   return <PublicSite />;
 }
 
