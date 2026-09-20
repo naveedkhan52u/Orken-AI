@@ -159,6 +159,7 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
     setLeads(l || []);
     setDocs(d || []);
     setFaqs(f || []);
+    setServices(s || []);
   }
 
   useEffect(() => { loadDashboard(); }, [user.id]);
