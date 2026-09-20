@@ -148,18 +148,20 @@ const [serviceForm, setServiceForm] = useState({ id: null, name: "", description
   const [file, setFile] = useState(null);
 
   async function loadDashboard() {
-    const [{ data: p }, { data: l }, { data: d }, { data: f }, { data: s }] = await Promise.all([
+    const [{ data: p }, { data: l }, { data: d }, { data: f }, { data: s }, { data: cd }] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).single(),
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("knowledge_documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("faqs").select("*").order("created_at", { ascending: false }),
 supabase.from("services").select("*").order("created_at", { ascending: false }),
+      supabase.from("custom_details").select("*").order("created_at", { ascending: false }),
     ]);
     setProfile({ full_name: p?.full_name || "", email: user.email || "" });
     setLeads(l || []);
     setDocs(d || []);
     setFaqs(f || []);
     setServices(s || []);
+    setCustomDetails(cd || []);
   }
 
   useEffect(() => { loadDashboard(); }, [user.id]);
@@ -305,6 +307,28 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
     setSaving(false);
   }
 
+  async function saveCustomDetail(e) {
+    e.preventDefault();
+    setSaving(true);
+    setMessage("");
+    const payload = { file_name: customDetailForm.file_name.trim(), content: customDetailForm.content.trim(), updated_at: new Date().toISOString() };
+    const result = customDetailForm.id
+      ? await supabase.from("custom_details").update(payload).eq("id", customDetailForm.id).eq("user_id", user.id)
+      : await supabase.from("custom_details").insert({ ...payload, user_id: user.id });
+    setMessage(result.error ? result.error.message : customDetailForm.id ? "Custom details updated." : "Custom details saved.");
+    if (!result.error) setCustomDetailForm({ id: null, file_name: "", content: "" });
+    await loadDashboard();
+    setSaving(false);
+  }
+
+  async function deleteCustomDetail(id) {
+    setSaving(true);
+    const { error } = await supabase.from("custom_details").delete().eq("id", id).eq("user_id", user.id);
+    setMessage(error ? error.message : "Custom details deleted.");
+    await loadDashboard();
+    setSaving(false);
+  }
+
   async function deleteFaq(id) {
     setSaving(true);
     const { error } = await supabase.from("faqs").delete().eq("id", id);
@@ -337,13 +361,14 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
         <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>Add Data</button>
         <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>
 <button className={section === "services" ? "active" : ""} onClick={() => setSection("services")}>Add Services</button>
+        <button className={section === "custom" ? "active" : ""} onClick={() => setSection("custom")}>Custom Details</button>
         <button className={section === "profile" ? "active" : ""} onClick={() => setSection("profile")}>Profile Settings</button>
         <button className="logout" onClick={logout}>Sign out</button>
       </aside>
 
       <main className="dashboard-main">
         <header className="dashboard-header">
-          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : section === "faqs" ? "FAQs" : section === "services" ? "Services" : "Profile Settings"}</h1></div>
+          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : section === "faqs" ? "FAQs" : section === "services" ? "Services" : section === "custom" ? "Custom Details" : "Profile Settings"}</h1></div>
           <div className="dashboard-user">{profile.full_name || user.email}</div>
         </header>
 
@@ -406,6 +431,23 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
         )}
 
         {section === "services" && <div className="data-layout"><div className="panel"><span className="panel-label">{serviceForm.id ? "EDIT SERVICE" : "ADD SERVICE"}</span><h2>{serviceForm.id ? "Edit service" : "Add a service"}</h2><form className="profile-panel" onSubmit={saveService}><label>Service name<input value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} placeholder="e.g. AI Customer Support" required /></label><label>Description<textarea value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} placeholder="Describe what this service provides..." rows="6" required /></label><div className="faq-actions"><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : serviceForm.id ? "Update Service" : "Add Service"}</button>{serviceForm.id && <button type="button" className="delete-btn" onClick={() => setServiceForm({ id: null, name: "", description: "" })}>Cancel</button>}</div></form>{message && <p className="form-message">{message}</p>}</div><div className="panel"><span className="panel-label">SERVICES</span><h2>Saved Services</h2>{services.length === 0 ? <p className="empty">No services added yet.</p> : <div className="doc-list">{services.map((service) => <div className="doc-row faq-row" key={service.id}><div><b>{service.name}</b><small>{service.description}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => setServiceForm({ id: service.id, name: service.name, description: service.description })}>Edit</button><button className="delete-btn" onClick={() => deleteService(service.id)}>Delete</button></div></div>)}</div>}</div></div>}
+
+        {section === "custom" && (
+          <div className="data-layout">
+            <div className="panel">
+              <div className="panel-top"><div><span className="panel-label">CUSTOM DETAILS</span><h2>{customDetailForm.id ? "Edit custom details" : "Custom knowledge"}</h2></div><button type="button" className="edit-btn" onClick={() => setCustomDetailForm({ id: null, file_name: "", content: "" })}>Add New</button></div>
+              {(customDetailForm.id || customDetails.length === 0 || customDetailForm.content !== "") && (
+                <form className="profile-panel" onSubmit={saveCustomDetail}>
+                  <label>File name<input value={customDetailForm.file_name} onChange={(e) => setCustomDetailForm({ ...customDetailForm, file_name: e.target.value })} placeholder="e.g. Company Policies" required /></label>
+                  <label>Custom details<textarea value={customDetailForm.content} onChange={(e) => setCustomDetailForm({ ...customDetailForm, content: e.target.value })} placeholder="Write the business details the AI should know..." rows="12" required /></label>
+                  <div className="faq-actions"><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : customDetailForm.id ? "Update Details" : "Save Details"}</button>{customDetailForm.id && <button type="button" className="delete-btn" onClick={() => setCustomDetailForm({ id: null, file_name: "", content: "" })}>Cancel</button>}</div>
+                </form>
+              )}
+              {message && <p className="form-message">{message}</p>}
+            </div>
+            <div className="panel"><span className="panel-label">SAVED CUSTOM DETAILS</span><h2>Your files</h2>{customDetails.length === 0 ? <p className="empty">No custom details created yet.</p> : <div className="doc-list">{customDetails.map((item) => <div className="doc-row faq-row" key={item.id}><div><b>{item.file_name}</b><small>Created: {new Date(item.created_at).toLocaleString()} · Updated: {new Date(item.updated_at).toLocaleString()}</small><small>{item.content}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => setCustomDetailForm({ id: item.id, file_name: item.file_name, content: item.content })}>Edit</button><button className="delete-btn" onClick={() => deleteCustomDetail(item.id)}>Delete</button></div></div>)}</div>}</div>
+          </div>
+        )}
 
         {section === "profile" && (
           <div className="panel profile-panel"><span className="panel-label">ACCOUNT</span><h2>Profile Settings</h2><form onSubmit={saveProfile}><label>Full name<input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></label><label>Email<input value={profile.email} disabled /></label><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button></form>{message && <p className="form-message">{message}</p>}</div>
