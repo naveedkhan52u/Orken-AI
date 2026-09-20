@@ -265,6 +265,7 @@ function AdminDashboard({ user, onLogout }) {
       <aside className="sidebar">
         <div className="dashboard-logo">ORKEN<span>AI</span></div>
         <div className="sidebar-label">ADMIN PANEL</div>
+        <a className="back-to-website" href="/">← Back to website</a>
         <button className={section === "overview" ? "active" : ""} onClick={() => setSection("overview")}>Overview</button>
         <button className={section === "leads" ? "active" : ""} onClick={() => setSection("leads")}>Lead Generation</button>
         <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>Add Data</button>
