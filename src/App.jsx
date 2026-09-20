@@ -143,9 +143,39 @@ function AdminDashboard({ user, onLogout }) {
     if (!file) return;
     setSaving(true);
     setMessage("");
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    let uploadFileObject = file;
+
+    // Compress images automatically to a maximum of 80 KB.
+    // Documents are uploaded unchanged because lossy image compression does not apply to them.
+    if (file.type.startsWith("image/")) {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      const maxDimension = 1800;
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+      let quality = 0.82;
+      let blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      while (blob && blob.size > 80 * 1024 && quality > 0.1) {
+        quality -= 0.07;
+        blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+      }
+
+      if (blob && blob.size <= 80 * 1024) {
+        uploadFileObject = new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+      } else {
+        setMessage("This image could not be compressed to 80 KB. Please choose a smaller image.");
+        setSaving(false);
+        return;
+      }
+    }
+
+    const safeName = uploadFileObject.name.replace(/[^a-zA-Z0-9._-]/g, "-");
     const path = user.id + "/" + Date.now() + "-" + safeName;
-    const { error: uploadError } = await supabase.storage.from("knowledge-documents").upload(path, file, { upsert: false });
+    const { error: uploadError } = await supabase.storage.from("knowledge-documents").upload(path, uploadFileObject, { upsert: false });
     if (uploadError) {
       setMessage(uploadError.message);
       setSaving(false);
@@ -156,7 +186,7 @@ function AdminDashboard({ user, onLogout }) {
       file_name: file.name,
       file_path: path,
       file_type: file.type || "unknown",
-      file_size: file.size,
+      file_size: uploadFileObject.size,
     });
     setMessage(rowError ? rowError.message : "File uploaded.");
     setFile(null);
