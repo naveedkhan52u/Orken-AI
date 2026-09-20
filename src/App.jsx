@@ -12,15 +12,18 @@ const agents = [
 function Chatbot() {
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState("");
-  const [items, setItems] = useState(["Hi, I'm Orken AI. How can I help?"]);
+  const [items, setItems] = useState([{ role: "ai", text: "Hi, I'm Orken AI. How can I help?" }]);
 
   function send(t = msg) {
     if (!t.trim()) return;
 
     setItems((x) => [
       ...x,
-      "You: " + t,
-      "Orken AI: I can help explain Orken's AI agents, automation, integrations, and delivery process.",
+      { role: "user", text: t },
+      {
+        role: "ai",
+        text: "I can help explain Orken's AI agents, automation, integrations, and delivery process.",
+      },
     ]);
     setMsg("");
   }
@@ -42,7 +45,9 @@ function Chatbot() {
 
           <main>
             {items.map((x, i) => (
-              <p key={i}>{x}</p>
+              <p key={i} className={x.role === "user" ? "user-message" : "ai-message"}>
+                {x.text}
+              </p>
             ))}
           </main>
 
