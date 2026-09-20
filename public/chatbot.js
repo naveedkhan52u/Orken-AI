@@ -258,7 +258,7 @@
         <button type="button" data-question="What do you build?">What do you build?</button>
         <button type="button" data-question="How long does it take?">How long?</button>
       </div>
-      <div class="orken-contact"><div class="orken-contact-title">Contact our team for human support</div><form class="orken-contact-form"><input name="name" placeholder="Name" required><input name="email" type="email" placeholder="Email" required><input name="whatsapp" placeholder="WhatsApp (optional)"><input name="subject" placeholder="Subject" required><div class="orken-contact-actions"><button type="button" class="close">Close</button><button type="submit" class="submit">Submit</button></div><div class="contact-message"></div></form></div><form>
+      <div class="orken-contact"><div class="orken-contact-title">Contact our team for human support</div><form class="orken-contact-form"><input name="name" placeholder="Name" required><input name="email" type="email" placeholder="Email" required><input name="whatsapp" placeholder="WhatsApp (optional)"><input name="subject" placeholder="Subject" required><div class="orken-contact-actions"><button type="button" class="close">Close</button><button type="submit" class="submit">Submit</button></div><div class="contact-message"></div></form></div><form class="orken-chat-form">
         <button type="button" class="mic-icon" aria-label="Use microphone" title="Voice input">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/>
@@ -410,7 +410,7 @@
     if (opening) input.focus();
   });
 
-  root.querySelector("form").addEventListener("submit", (event) => {
+  root.querySelector(".orken-chat-form").addEventListener("submit", (event) => {
     event.preventDefault();
     send();
   });
