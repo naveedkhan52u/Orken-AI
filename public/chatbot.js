@@ -12,21 +12,236 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .orken-chat{position:fixed;right:22px;bottom:22px;z-index:2147483647;font-family:Inter,Arial,sans-serif}
-    .orken-launcher{width:54px;height:54px;border-radius:50%;border:1px solid #c7edff;background:#9edcff;color:#071015;cursor:pointer;box-shadow:0 8px 25px #0008;font-size:23px}
-    .orken-window{position:absolute;right:0;bottom:64px;width:340px;height:min(440px,calc(100vh - 120px));background:#10130f;border:1px solid #30362d;border-radius:8px;box-shadow:0 20px 60px #0008;display:none;flex-direction:column;overflow:hidden}
-    .orken-window.open{display:flex}
-    .orken-head{padding:15px;border-bottom:1px solid #30362d;display:flex;justify-content:space-between;color:#f2f5ef}
-    .orken-head span{font-size:8px;color:#9eff65}
-    .orken-messages{padding:15px;overflow:auto;flex:1}
-    .orken-msg{font-size:12px;line-height:1.5;padding:8px 10px;border-radius:10px;max-width:82%;width:fit-content;margin:7px 0;white-space:pre-wrap}
-    .orken-ai{background:#1b2119;color:#d8ded5;border:1px solid #30382d;border-bottom-left-radius:3px}
-    .orken-user{margin-left:auto;background:#9eff65;color:#071007;border-bottom-right-radius:3px}
-    .orken-form{display:flex;border-top:1px solid #30362d}
-    .orken-input{flex:1;background:transparent;border:0;padding:14px;color:#fff;outline:0;min-width:0}
-    .orken-send{border:0;background:#9eff65;color:#071007;padding:0 14px;cursor:pointer}
-    .orken-status{padding:7px 12px;color:#899187;font-size:10px;border-top:1px solid #252b22;display:none}
-    @media(max-width:600px){.orken-chat{right:12px;bottom:12px}.orken-window{width:min(340px,calc(100vw - 24px))}}
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+    .orken-chat {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 2147483647;
+      width: 340px;
+      height: 52px;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    .orken-chat * { box-sizing: border-box; }
+
+    .orken-launcher {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #9edcff;
+      color: #071015;
+      border: 1px solid #c7edff;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: 0 8px 25px #0008;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: orkenServicePulse 2.2s ease-in-out infinite;
+    }
+
+    .orken-launcher::after {
+      content: "✉";
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+      color: #fff;
+    }
+
+    .orken-launcher:hover {
+      transform: scale(1.06);
+      animation-play-state: paused;
+      box-shadow: 0 10px 30px #9edcff55;
+    }
+
+    @keyframes orkenServicePulse {
+      0%, 100% { box-shadow: 0 8px 25px #0008, 0 0 0 0 #9edcff66; }
+      50% { box-shadow: 0 8px 25px #0008, 0 0 0 8px #9edcff00; }
+    }
+
+    .orken-window {
+      position: absolute;
+      right: 0;
+      bottom: 64px;
+      border-radius: 8px;
+      width: 340px;
+      height: min(440px, calc(100vh - 120px));
+      background: #10130f;
+      border: 1px solid #30362d;
+      box-shadow: 0 20px 60px #0008;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .orken-window.open { display: flex; }
+
+    .orken-window header {
+      padding: 15px;
+      border-bottom: 1px solid #30362d;
+      display: flex;
+      justify-content: space-between;
+      color: #f2f5ef;
+    }
+
+    .orken-window header span {
+      font-size: 8px;
+      color: #9eff65;
+    }
+
+    .orken-window main {
+      padding: 15px;
+      overflow: auto;
+      flex: 1;
+    }
+
+    .orken-window main p {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #c8cec4;
+      padding: 8px 10px;
+      border-radius: 10px;
+      max-width: 82%;
+      width: fit-content;
+      margin: 7px 0;
+      white-space: pre-wrap;
+    }
+
+    .orken-window main .user-message {
+      margin-left: auto;
+      background: #9eff65;
+      color: #071007;
+      border-bottom-right-radius: 3px;
+    }
+
+    .orken-window main .ai-message {
+      margin-right: auto;
+      background: #1b2119;
+      color: #d8ded5;
+      border: 1px solid #30382d;
+      border-bottom-left-radius: 3px;
+    }
+
+    .orken-suggest {
+      display: flex;
+      gap: 6px;
+      padding: 8px;
+      flex-wrap: wrap;
+    }
+
+    .orken-suggest button {
+      background: #171b15;
+      color: #aeb5aa;
+      border: 1px solid #343a31;
+      padding: 6px;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .orken-suggest button:hover { color: #9eff65; border-color: #9eff65; }
+
+    .orken-window form {
+      display: flex;
+      border-top: 1px solid #30362d;
+    }
+
+    .orken-window input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: 0;
+      padding: 14px;
+      color: white;
+      outline: 0;
+      font: inherit;
+    }
+
+    .orken-window input::placeholder { color: #737970; }
+
+    .orken-window form .mic-icon,
+    .orken-window form .send-icon {
+      margin-bottom: 4px;
+      margin-top: 5px;
+      margin-right: 6px;
+      border-radius: 30%;
+      cursor: pointer;
+    }
+
+    .orken-window form .mic-icon {
+      background: transparent;
+      border: 0;
+      color: #fff;
+      width: 42px;
+      padding: 0 10px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .orken-window form .mic-icon:hover { color: #9eff65; }
+
+    .orken-window form .send-icon {
+      background: #9eff65;
+      border: 0;
+      padding: 13px;
+      color: #071007;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mic-icon svg, .send-icon svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .orken-window form .mic-icon.listening {
+      color: #9eff65;
+      background: #172014;
+      box-shadow: 0 0 0 3px #9eff6522;
+      animation: orkenMicPulse 1.2s ease-in-out infinite;
+    }
+
+    .orken-window form .mic-icon:disabled { opacity: .6; }
+
+    @keyframes orkenMicPulse {
+      0%, 100% { box-shadow: 0 0 0 3px #9eff6522; }
+      50% { box-shadow: 0 0 0 7px #9eff6500; }
+    }
+
+    .orken-voice-error {
+      margin: 6px 12px 10px;
+      color: #ff9b9b;
+      font-size: 10px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .orken-chat {
+        right: 12px;
+        bottom: 12px;
+        width: 330px;
+      }
+
+      .orken-window {
+        width: min(340px, calc(100vw - 24px));
+        right: 0;
+        height: min(440px, calc(100vh - 120px));
+      }
+    }
   `;
   document.head.appendChild(style);
 
@@ -34,52 +249,62 @@
   root.className = "orken-chat";
   root.innerHTML = `
     <div class="orken-window" role="dialog" aria-label="Orken AI chat">
-      <div class="orken-head"><b>Orken AI</b><span>AI · LIVE</span></div>
-      <div class="orken-messages"></div>
-      <div class="orken-status"></div>
-      <form class="orken-form">
-        <input class="orken-input" placeholder="Ask Orken AI..." aria-label="Message" autocomplete="off">
-        <button class="orken-send" aria-label="Send message" type="submit">➤</button>
+      <header>
+        <b>Orken AI</b>
+        <span>GROQ-POWERED · LIVE</span>
+      </header>
+      <main></main>
+      <div class="orken-suggest">
+        <button type="button" data-question="What do you build?">What do you build?</button>
+        <button type="button" data-question="How long does it take?">How long?</button>
+      </div>
+      <form>
+        <button type="button" class="mic-icon" aria-label="Use microphone" title="Voice input">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/>
+            <path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8"/>
+          </svg>
+        </button>
+        <input placeholder="Ask Orken AI..." aria-label="Message" autocomplete="off">
+        <button aria-label="Send message" class="send-icon" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 3 10.5 13.5M21 3l-6.7 18-3.8-7.5L3 9.7 21 3Z"/>
+          </svg>
+        </button>
       </form>
     </div>
-    <button class="orken-launcher" aria-label="Open Orken AI chat">✦</button>
+    <button class="orken-launcher" aria-label="Open Orken AI chat"></button>
   `;
   document.body.appendChild(root);
 
   const windowEl = root.querySelector(".orken-window");
-  const messagesEl = root.querySelector(".orken-messages");
-  const statusEl = root.querySelector(".orken-status");
-  const input = root.querySelector(".orken-input");
+  const messagesEl = root.querySelector("main");
+  const input = root.querySelector("input");
+  const micButton = root.querySelector(".mic-icon");
+  const launcher = root.querySelector(".orken-launcher");
+
+  const history = [];
+  let isListening = false;
+  let recognition = null;
 
   function addMessage(text, role) {
-    const el = document.createElement("div");
-    el.className = "orken-msg " + (role === "user" ? "orken-user" : "orken-ai");
+    const el = document.createElement("p");
+    el.className = role === "user" ? "user-message" : "ai-message";
     el.textContent = text;
     messagesEl.appendChild(el);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  root.querySelector(".orken-launcher").addEventListener("click", () => {
-    const opening = !windowEl.classList.contains("open");
-    windowEl.classList.toggle("open");
-    if (opening && !messagesEl.children.length) {
-      addMessage("Hi, I'm Orken AI. How can I help?", "ai");
-    }
-    if (opening) input.focus();
-  });
-
-  const history = [];
-
-  root.querySelector(".orken-form").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const question = input.value.trim();
+  async function send(text = input.value) {
+    const question = text.trim();
     if (!question) return;
 
     addMessage(question, "user");
     history.push({ role: "user", text: question });
     input.value = "";
-    statusEl.textContent = "Thinking...";
-    statusEl.style.display = "block";
+
+    const buttons = root.querySelectorAll(".orken-suggest button");
+    buttons.forEach((button) => { button.disabled = true; });
 
     try {
       const response = await fetch(FUNCTION_URL, {
@@ -99,14 +324,104 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "AI request failed");
 
-      const answer = data?.answer || "I do not have that information in the business knowledge yet.";
+      const answer = data?.answer || "I don't have that information in the business knowledge yet.";
       addMessage(answer, "ai");
       history.push({ role: "ai", text: answer });
     } catch (error) {
       console.error("[Orken AI]", error);
       addMessage("I’m unable to access the business knowledge right now.", "ai");
     } finally {
-      statusEl.style.display = "none";
+      buttons.forEach((button) => { button.disabled = false; });
     }
+  }
+
+  function startVoiceInput() {
+    if (isListening) {
+      try { recognition?.stop(); } catch {}
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+
+    try {
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        isListening = true;
+        micButton.classList.add("listening");
+        micButton.title = "Stop listening";
+        input.placeholder = "Listening...";
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        input.value = transcript.trim();
+      };
+
+      recognition.onerror = (event) => {
+        isListening = false;
+        micButton.classList.remove("listening");
+        micButton.title = "Voice input";
+        input.placeholder = "Ask Orken AI...";
+        if (event.error !== "aborted") {
+          alert(event.error === "not-allowed"
+            ? "Microphone permission was blocked. Allow microphone access and try again."
+            : "Voice input could not be started. Please try again.");
+        }
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micButton.classList.remove("listening");
+        micButton.title = "Voice input";
+        input.placeholder = "Ask Orken AI...";
+        recognition = null;
+      };
+
+      recognition.start();
+    } catch {
+      isListening = false;
+      micButton.classList.remove("listening");
+      input.placeholder = "Ask Orken AI...";
+      recognition = null;
+      alert("Voice input could not be started. Please try again.");
+    }
+  }
+
+  launcher.addEventListener("click", () => {
+    const opening = !windowEl.classList.contains("open");
+    windowEl.classList.toggle("open");
+
+    if (opening && !messagesEl.children.length) {
+      addMessage("Hi, I'm Orken AI. How can I help?", "ai");
+    }
+
+    if (opening) input.focus();
+  });
+
+  root.querySelector("form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    send();
+  });
+
+  micButton.addEventListener("click", startVoiceInput);
+
+  root.querySelectorAll(".orken-suggest button").forEach((button) => {
+    button.addEventListener("click", () => send(button.dataset.question || ""));
+  });
+
+  window.addEventListener("beforeunload", () => {
+    try { recognition?.stop(); } catch {}
   });
 })();
