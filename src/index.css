@@ -435,3 +435,7 @@ footer span
     margin-top:8px
   }
 }
+
+.window form button {
+    padding: 5px;
+}
