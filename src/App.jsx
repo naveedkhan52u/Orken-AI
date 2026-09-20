@@ -141,6 +141,9 @@ function AdminDashboard({ user, onLogout }) {
   const [docs, setDocs] = useState([]);
   const [faqs, setFaqs] = useState([]);
 const [services, setServices] = useState([]);
+  const [customDetails, setCustomDetails] = useState([]);
+  const [customDetailForm, setCustomDetailForm] = useState({ id: null, file_name: "", content: "" });
+  const [customDetailEditorOpen, setCustomDetailEditorOpen] = useState(false);
 const [serviceForm, setServiceForm] = useState({ id: null, name: "", description: "" });
   const [faqForm, setFaqForm] = useState({ id: null, question: "", answer: "" });
   const [saving, setSaving] = useState(false);
