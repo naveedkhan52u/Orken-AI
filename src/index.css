@@ -378,7 +378,8 @@ footer span
   align-items:center;
   justify-content:center
 }
-.mic-icon svg
+.mic-icon svg,
+.send-icon svg
 {
   width:18px;
   height:18px;
