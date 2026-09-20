@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -62,7 +62,7 @@ function Chatbot() {
             <button onClick={() => send("How long does it take?")}>How long?</button>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(); }}>
-            <button type="button" className="mic-icon" aria-label="Use microphone">
+            <button type="button" className={`mic-icon${listening ? " listening" : ""}`} onClick={toggleVoiceInput} aria-label={listening ? "Stop voice input" : "Use microphone"} title={listening ? "Stop listening" : "Voice input"}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             </button>
             <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Ask Orken AI..." />
