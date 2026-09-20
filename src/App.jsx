@@ -201,7 +201,7 @@ function AdminDashboard({ user, onLogout }) {
       return;
     }
 
-    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v2", {
+    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v3", {
       body: { document_id: document.id, file_path: path },
     });
 
@@ -220,7 +220,7 @@ function AdminDashboard({ user, onLogout }) {
   async function reindexDoc(doc) {
     setSaving(true);
     setMessage("");
-    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v2", {
+    const { data: indexed, error: indexError } = await supabase.functions.invoke("index-document-v3", {
       body: { document_id: doc.id, file_path: doc.file_path },
     });
     if (indexError || indexed?.error) setMessage(indexed?.error || indexError?.message || "The file could not be indexed.");
