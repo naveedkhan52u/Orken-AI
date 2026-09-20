@@ -77,8 +77,21 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
       r.onend=()=>{listeningRef.current=false;setIsListening(false);recognitionRef.current=null}; recognitionRef.current=r;r.start();
     }catch{listeningRef.current=false;setIsListening(false);recognitionRef.current=null;setVoiceError("Voice input could not be started. Please try again.")}
   }
+  useEffect(()=>{
+    if(!embedded) return;
+    const root=document.documentElement, body=document.body;
+    const previousRoot=root.style.background;
+    const previousBody=body.style.background;
+    root.style.background="transparent";
+    body.style.background="transparent";
+    return ()=>{root.style.background=previousRoot;body.style.background=previousBody};
+  },[embedded]);
+  useEffect(()=>{
+    if(!embedded || window.parent===window) return;
+    window.parent.postMessage({type:"orken-chatbot-state",open},"*");
+  },[embedded,open]);
   useEffect(()=>()=>{listeningRef.current=false;try{recognitionRef.current?.stop()}catch{};recognitionRef.current=null},[]);
-  return <div className="chat">
+  return <div className={embedded ? "chat embedded-chat" : "chat"}>
     <button className="launcher" onClick={()=>setOpen(!open)} aria-label="Open Orken AI chat"/>
     {open&&<div className="window">
       <header><b>Orken AI</b><span>GROQ-POWERED · LIVE</span></header>
