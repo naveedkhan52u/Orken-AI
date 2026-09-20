@@ -365,7 +365,35 @@ footer span
   color:white;
   outline:0
 }
-.window form button
+.window form .mic-icon
+{
+  background:transparent;
+  border:0;
+  color:#fff;
+  width:42px;
+  padding:0 10px;
+  line-height:1;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center
+}
+.mic-icon svg
+{
+  width:18px;
+  height:18px;
+  display:block;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round
+}
+.window form .mic-icon:hover
+{
+  color:#9eff65
+}
+.window form .send-icon
 {
   background:#9eff65;
   border:0;
@@ -436,11 +464,16 @@ footer span
   }
 }
 
-.window form button {
-    margin-bottom: 4px;
-    padding: 13px;
-    margin-top: 5px;
-    margin-right: 6px;
-    border-radius: 30%;
-    cursor: pointer;
+.window form .mic-icon,
+.window form .send-icon
+{
+  margin-bottom:4px;
+  margin-top:5px;
+  margin-right:6px;
+  border-radius:30%;
+  cursor:pointer
+}
+.window form .send-icon
+{
+  padding:13px
 }
