@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
@@ -46,6 +46,10 @@ function Chatbot() {
   const [items, setItems] = useState([
     { role: "ai", text: "Hi, I'm Orken AI. How can I help?" },
   ]);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+  const listeningRef = useRef(false);
+  const [voiceError, setVoiceError] = useState("");
 
   async function send(t = msg) {
     const question = t.trim();
@@ -65,6 +69,73 @@ function Chatbot() {
       setItems((x) => [...x, { role: "ai", text: "I’m unable to access the business knowledge right now." }]);
     }
   }
+
+  function startVoiceInput() {
+    setVoiceError("");
+    if (listeningRef.current) {
+      try { recognitionRef.current?.stop(); } catch {}
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceError("Voice input is not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        listeningRef.current = true;
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setMsg(transcript.trim());
+      };
+
+      recognition.onerror = (event) => {
+        listeningRef.current = false;
+        setIsListening(false);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          setVoiceError("Microphone permission was blocked. Allow microphone access and try again.");
+        } else if (event.error !== "aborted") {
+          setVoiceError("Voice input could not be started. Please try again.");
+        }
+      };
+
+      recognition.onend = () => {
+        listeningRef.current = false;
+        setIsListening(false);
+        recognitionRef.current = null;
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      listeningRef.current = false;
+      setIsListening(false);
+      recognitionRef.current = null;
+      setVoiceError("Voice input could not be started. Please try again.");
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      listeningRef.current = false;
+      try { recognitionRef.current?.stop(); } catch {}
+      recognitionRef.current = null;
+    };
+  }, []);
 
   return (
     <div className="chat">
@@ -87,14 +158,15 @@ function Chatbot() {
             <button onClick={() => send("How long does it take?")}>How long?</button>
           </div>
           <form onSubmit={(e) => { e.preventDefault(); send(); }}>
-            <button type="button" className="mic-icon" aria-label="Use microphone">
+            <button type="button" className={`mic-icon${isListening ? " listening" : ""}`} onClick={startVoiceInput} aria-label={isListening ? "Stop microphone" : "Use microphone"} title={isListening ? "Stop listening" : "Voice input"} disabled={false}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><path d="M19 11a7 7 0 0 1-14 0M12 18v4M8 22h8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
             </button>
-            <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder="Ask Orken AI..." />
+            <input value={msg} onChange={(e) => setMsg(e.target.value)} placeholder={isListening ? "Listening..." : "Ask Orken AI..."} aria-label="Message" />
             <button aria-label="Send message" className="send-icon" type="submit">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10.5 13.5M21 3l-6.7 18-3.8-7.5L3 9.7 21 3Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
           </form>
+          {voiceError && <div className="voice-error" role="status">{voiceError}</div>}
         </div>
       )}
     </div>
