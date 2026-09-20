@@ -334,7 +334,27 @@ footer span
 {
   font-size:12px;
   line-height:1.5;
-  color:#c8cec4
+  color:#c8cec4;
+  padding:8px 10px;
+  border-radius:10px;
+  max-width:82%;
+  width:fit-content;
+  margin:7px 0
+}
+.window main .user-message
+{
+  margin-left:auto;
+  background:#9eff65;
+  color:#071007;
+  border-bottom-right-radius:3px
+}
+.window main .ai-message
+{
+  margin-right:auto;
+  background:#1b2119;
+  color:#d8ded5;
+  border:1px solid #30382d;
+  border-bottom-left-radius:3px
 }
 .suggest
 {
