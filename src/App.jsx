@@ -316,7 +316,7 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
       ? await supabase.from("custom_details").update(payload).eq("id", customDetailForm.id).eq("user_id", user.id)
       : await supabase.from("custom_details").insert({ ...payload, user_id: user.id });
     setMessage(result.error ? result.error.message : customDetailForm.id ? "Custom details updated." : "Custom details saved.");
-    if (!result.error) setCustomDetailForm({ id: null, file_name: "", content: "" });
+    if (!result.error) { setCustomDetailForm({ id: null, file_name: "", content: "" }); setCustomDetailEditorOpen(false); } setCustomDetailEditorOpen(false);
     await loadDashboard();
     setSaving(false);
   }
@@ -435,17 +435,17 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
         {section === "custom" && (
           <div className="data-layout">
             <div className="panel">
-              <div className="panel-top"><div><span className="panel-label">CUSTOM DETAILS</span><h2>{customDetailForm.id ? "Edit custom details" : "Custom knowledge"}</h2></div><button type="button" className="edit-btn" onClick={() => setCustomDetailForm({ id: null, file_name: "", content: "" })}>Add New</button></div>
-              {(customDetailForm.id || customDetails.length === 0 || customDetailForm.content !== "") && (
+              <div className="panel-top"><div><span className="panel-label">CUSTOM DETAILS</span><h2>{customDetailForm.id ? "Edit custom details" : "Custom knowledge"}</h2></div><button type="button" className="edit-btn" onClick={() => { setCustomDetailForm({ id: null, file_name: "", content: "" }); setCustomDetailEditorOpen(true); }}>Add New</button></div>
+              {customDetailEditorOpen && (
                 <form className="profile-panel" onSubmit={saveCustomDetail}>
                   <label>File name<input value={customDetailForm.file_name} onChange={(e) => setCustomDetailForm({ ...customDetailForm, file_name: e.target.value })} placeholder="e.g. Company Policies" required /></label>
                   <label>Custom details<textarea value={customDetailForm.content} onChange={(e) => setCustomDetailForm({ ...customDetailForm, content: e.target.value })} placeholder="Write the business details the AI should know..." rows="12" required /></label>
-                  <div className="faq-actions"><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : customDetailForm.id ? "Update Details" : "Save Details"}</button>{customDetailForm.id && <button type="button" className="delete-btn" onClick={() => setCustomDetailForm({ id: null, file_name: "", content: "" })}>Cancel</button>}</div>
+                  <div className="faq-actions"><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : customDetailForm.id ? "Update Details" : "Save Details"}</button>{customDetailForm.id && <button type="button" className="delete-btn" onClick={() => { setCustomDetailForm({ id: null, file_name: "", content: "" }); setCustomDetailEditorOpen(false); }}>Cancel</button>}</div>
                 </form>
               )}
               {message && <p className="form-message">{message}</p>}
             </div>
-            <div className="panel"><span className="panel-label">SAVED CUSTOM DETAILS</span><h2>Your files</h2>{customDetails.length === 0 ? <p className="empty">No custom details created yet.</p> : <div className="doc-list">{customDetails.map((item) => <div className="doc-row faq-row" key={item.id}><div><b>{item.file_name}</b><small>Created: {new Date(item.created_at).toLocaleString()} · Updated: {new Date(item.updated_at).toLocaleString()}</small><small>{item.content}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => setCustomDetailForm({ id: item.id, file_name: item.file_name, content: item.content })}>Edit</button><button className="delete-btn" onClick={() => deleteCustomDetail(item.id)}>Delete</button></div></div>)}</div>}</div>
+            <div className="panel"><span className="panel-label">SAVED CUSTOM DETAILS</span><h2>Your files</h2>{customDetails.length === 0 ? <p className="empty">No custom details created yet.</p> : <div className="doc-list">{customDetails.map((item) => <div className="doc-row faq-row" key={item.id}><div><b>{item.file_name}</b><small>Created: {new Date(item.created_at).toLocaleString()} · Updated: {new Date(item.updated_at).toLocaleString()}</small><small>{item.content}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => { setCustomDetailForm({ id: item.id, file_name: item.file_name, content: item.content }); setCustomDetailEditorOpen(true); }}>Edit</button><button className="delete-btn" onClick={() => deleteCustomDetail(item.id)}>Delete</button></div></div>)}</div>}</div>
           </div>
         )}
 
