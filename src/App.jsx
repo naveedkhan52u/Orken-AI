@@ -51,7 +51,7 @@ function Chatbot() {
     const question=t.trim(); if(!question)return;
     setItems(x=>[...x,{role:"user",text:question}]); setMsg(""); setLeadMessage("");
     try{
-      const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:null}});
+      const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:"4f779903-738c-4dfe-bcc2-201ca06253f2"}});
       if(error)throw error;
       if(data?.found===false||data?.fallback===true||!data?.answer){
         setItems(x=>[...x,{role:"ai",text:"I can only assist about Orken AI and its services. I couldn't find an answer to that question."}]);
