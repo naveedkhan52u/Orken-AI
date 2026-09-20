@@ -145,7 +145,7 @@
 
     .orken-suggest button:hover { color: #9eff65; border-color: #9eff65; }
 
-    .orken-window form {
+    .orken-contact{display:none;padding:10px 12px;border-top:1px solid #30362d;background:#0c0f0b}.orken-contact-title{color:#9eff65;font-size:11px;font-weight:600;margin-bottom:8px}.orken-contact input{width:100%;margin:3px 0;padding:8px;background:#10130f;border:1px solid #30362d;color:#fff;outline:0;font:10px Inter,Arial,sans-serif}.orken-contact-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}.orken-contact-actions button{border:1px solid #3a4235;background:#171b15;color:#aeb5aa;padding:6px 9px;font-size:9px;cursor:pointer}.orken-contact-actions .submit{background:#9eff65;color:#071007;border-color:#9eff65}.contact-message{color:#9eff65;font-size:9px;margin-top:6px}.orken-window form {
       display: flex;
       border-top: 1px solid #30362d;
     }
@@ -258,7 +258,7 @@
         <button type="button" data-question="What do you build?">What do you build?</button>
         <button type="button" data-question="How long does it take?">How long?</button>
       </div>
-      <form>
+      <div class="orken-contact"><div class="orken-contact-title">Contact our team for human support</div><form class="orken-contact-form"><input name="name" placeholder="Name" required><input name="email" type="email" placeholder="Email" required><input name="whatsapp" placeholder="WhatsApp (optional)"><input name="subject" placeholder="Subject" required><div class="orken-contact-actions"><button type="button" class="close">Close</button><button type="submit" class="submit">Submit</button></div><div class="contact-message"></div></form></div><form>
         <button type="button" class="mic-icon" aria-label="Use microphone" title="Voice input">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3Z"/>
@@ -416,6 +416,21 @@
   });
 
   micButton.addEventListener("click", startVoiceInput);
+
+  function showContact(){ root.querySelector(".orken-contact").style.display="block"; }
+  async function submitLead(e){
+    e.preventDefault();
+    const form=e.currentTarget, button=form.querySelector(".submit"), msg=form.querySelector(".contact-message");
+    button.disabled=true; msg.textContent="";
+    const payload={name:form.name.value.trim(),email:form.email.value.trim(),phone:form.whatsapp.value.trim()||null,message:form.subject.value.trim(),source:"Orken AI chatbot human support",business_id:businessId,status:"new"};
+    try{
+      const r=await fetch(SUPABASE_URL+"/rest/v1/leads",{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Prefer":"return=minimal"},body:JSON.stringify(payload)});
+      if(!r.ok) throw new Error("submit failed");
+      msg.textContent="Thank you. Our team will contact you."; form.reset();
+    }catch(err){console.error("[Orken AI lead]",err);msg.textContent="Unable to submit right now. Please try again."} finally{button.disabled=false}
+  }
+  root.querySelector(".orken-contact-form").addEventListener("submit",submitLead);
+  root.querySelector(".orken-contact .close").addEventListener("click",()=>{root.querySelector(".orken-contact").style.display="none"});
 
   root.querySelectorAll(".orken-suggest button").forEach((button) => {
     button.addEventListener("click", () => send(button.dataset.question || ""));
