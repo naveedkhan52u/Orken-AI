@@ -16,19 +16,32 @@
     "position:fixed",
     "right:0",
     "bottom:0",
-    "width:390px",
-    "height:540px",
+    "width:0",
+    "height:0",
     "border:0",
     "background:transparent",
     "z-index:2147483647",
-    "overflow:hidden"
+    "overflow:hidden",
+    "display:block",
+    "visibility:hidden"
   ].join(";");
   document.body.appendChild(frame);
 
-  function resize() {
-    frame.style.width = window.innerWidth <= 600 ? "100vw" : "390px";
-    frame.style.height = window.innerWidth <= 600 ? "100vh" : "540px";
+  function setOpen(open) {
+    const mobile = window.innerWidth <= 600;
+    frame.style.width = open ? (mobile ? "100vw" : "390px") : "0";
+    frame.style.height = open ? (mobile ? "100vh" : "540px") : "0";
+    frame.style.visibility = open ? "visible" : "hidden";
   }
-  resize();
-  window.addEventListener("resize", resize);
+
+  window.addEventListener("message", (event) => {
+    if (event.source !== frame.contentWindow) return;
+    if (event.data?.type !== "orken-chatbot-state") return;
+    setOpen(Boolean(event.data.open));
+  });
+
+  window.addEventListener("resize", () => {
+    const visible = frame.style.visibility === "visible";
+    if (visible) setOpen(true);
+  });
 })();
