@@ -139,18 +139,18 @@ function AdminDashboard({ user, onLogout }) {
   const [profile, setProfile] = useState({ full_name: "", email: user.email || "" });
   const [leads, setLeads] = useState([]);
   const [docs, setDocs] = useState([]);
-  const [faqs, setFaqs] = useState([]);
+  const [faqs, setFaqs] = useState([]);\n  const [services, setServices] = useState([]);\n  const [serviceForm, setServiceForm] = useState({ id: null, name: "", description: "" });
   const [faqForm, setFaqForm] = useState({ id: null, question: "", answer: "" });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
 
   async function loadDashboard() {
-    const [{ data: p }, { data: l }, { data: d }, { data: f }] = await Promise.all([
+    const [{ data: p }, { data: l }, { data: d }, { data: f }, { data: s }] = await Promise.all([
       supabase.from("profiles").select("full_name").eq("id", user.id).single(),
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("knowledge_documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("faqs").select("*").order("created_at", { ascending: false }),
+      supabase.from("faqs").select("*").order("created_at", { ascending: false }),\n      supabase.from("services").select("*").order("created_at", { ascending: false }),
     ]);
     setProfile({ full_name: p?.full_name || "", email: user.email || "" });
     setLeads(l || []);
@@ -279,6 +279,28 @@ function AdminDashboard({ user, onLogout }) {
     setSaving(false);
   }
 
+  async function saveService(e) {
+    e.preventDefault();
+    setSaving(true);
+    setMessage("");
+    const payload = { name: serviceForm.name.trim(), description: serviceForm.description.trim(), updated_at: new Date().toISOString() };
+    const result = serviceForm.id
+      ? await supabase.from("services").update(payload).eq("id", serviceForm.id)
+      : await supabase.from("services").insert(payload);
+    setMessage(result.error ? result.error.message : serviceForm.id ? "Service updated." : "Service added.");
+    if (!result.error) setServiceForm({ id: null, name: "", description: "" });
+    await loadDashboard();
+    setSaving(false);
+  }
+
+  async function deleteService(id) {
+    setSaving(true);
+    const { error } = await supabase.from("services").delete().eq("id", id);
+    setMessage(error ? error.message : "Service deleted.");
+    await loadDashboard();
+    setSaving(false);
+  }
+
   async function deleteFaq(id) {
     setSaving(true);
     const { error } = await supabase.from("faqs").delete().eq("id", id);
@@ -309,14 +331,14 @@ function AdminDashboard({ user, onLogout }) {
         <button className={section === "overview" ? "active" : ""} onClick={() => setSection("overview")}>Overview</button>
         <button className={section === "leads" ? "active" : ""} onClick={() => setSection("leads")}>Lead Generation</button>
         <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>Add Data</button>
-        <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>
+        <button className={section === "faqs" ? "active" : ""} onClick={() => setSection("faqs")}>FAQs</button>\n        <button className={section === "services" ? "active" : ""} onClick={() => setSection("services")}>Add Services</button>
         <button className={section === "profile" ? "active" : ""} onClick={() => setSection("profile")}>Profile Settings</button>
         <button className="logout" onClick={logout}>Sign out</button>
       </aside>
 
       <main className="dashboard-main">
         <header className="dashboard-header">
-          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : section === "faqs" ? "FAQs" : "Profile Settings"}</h1></div>
+          <div><span>ADMIN DASHBOARD</span><h1>{section === "overview" ? "Overview" : section === "leads" ? "Lead Generation" : section === "data" ? "Knowledge Data" : section === "faqs" ? "FAQs" : section === "services" ? "Services" : "Profile Settings"}</h1></div>
           <div className="dashboard-user">{profile.full_name || user.email}</div>
         </header>
 
@@ -377,6 +399,8 @@ function AdminDashboard({ user, onLogout }) {
             </div>
           </div>
         )}
+
+        {section === "services" && <div className="data-layout"><div className="panel"><span className="panel-label">{serviceForm.id ? "EDIT SERVICE" : "ADD SERVICE"}</span><h2>{serviceForm.id ? "Edit service" : "Add a service"}</h2><form className="profile-panel" onSubmit={saveService}><label>Service name<input value={serviceForm.name} onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} placeholder="e.g. AI Customer Support" required /></label><label>Description<textarea value={serviceForm.description} onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} placeholder="Describe what this service provides..." rows="6" required /></label><div className="faq-actions"><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : serviceForm.id ? "Update Service" : "Add Service"}</button>{serviceForm.id && <button type="button" className="delete-btn" onClick={() => setServiceForm({ id: null, name: "", description: "" })}>Cancel</button>}</div></form>{message && <p className="form-message">{message}</p>}</div><div className="panel"><span className="panel-label">SERVICES</span><h2>Saved Services</h2>{services.length === 0 ? <p className="empty">No services added yet.</p> : <div className="doc-list">{services.map((service) => <div className="doc-row faq-row" key={service.id}><div><b>{service.name}</b><small>{service.description}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => setServiceForm({ id: service.id, name: service.name, description: service.description })}>Edit</button><button className="delete-btn" onClick={() => deleteService(service.id)}>Delete</button></div></div>)}</div>}</div></div>}
 
         {section === "profile" && (
           <div className="panel profile-panel"><span className="panel-label">ACCOUNT</span><h2>Profile Settings</h2><form onSubmit={saveProfile}><label>Full name<input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></label><label>Email<input value={profile.email} disabled /></label><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button></form>{message && <p className="form-message">{message}</p>}</div>
