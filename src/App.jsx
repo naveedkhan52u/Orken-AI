@@ -354,8 +354,11 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
   }
 
   async function deleteLead(id) {
-    await supabase.from("leads").delete().eq("id", id);
+    setSaving(true);
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    setMessage(error ? error.message : "Lead deleted.");
     await loadDashboard();
+    setSaving(false);
   }
 
   function logout() {
@@ -401,8 +404,8 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
           <div className="panel">
             <div className="panel-top"><div><span className="panel-label">CUSTOMER INQUIRIES</span><h2>Lead Generation</h2></div><b>{leads.length} leads</b></div>
             {leads.length === 0 ? <p className="empty">No leads yet.</p> : (
-              <div className="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Status</th><th>Created</th><th></th></tr></thead>
-                <tbody>{leads.map((lead) => <tr key={lead.id}><td>{lead.name}</td><td>{lead.email || "—"}</td><td>{lead.phone || "—"}</td><td>{lead.message || "—"}</td><td><span className="status-pill">{lead.status}</span></td><td>{new Date(lead.created_at).toLocaleString()}</td><td><button className="delete-btn" onClick={() => deleteLead(lead.id)}>Delete</button></td></tr>)}</tbody>
+              <div className="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Message</th><th>Status</th><th>Date</th><th>Time</th><th>Action</th></tr></thead>
+                <tbody>{leads.map((lead) => { const created = new Date(lead.created_at); return <tr key={lead.id}><td>{lead.name}</td><td>{lead.email || "—"}</td><td>{lead.phone || "—"}</td><td>{lead.message || "—"}</td><td><span className="status-pill">{lead.status}</span></td><td>{created.toLocaleDateString()}</td><td>{created.toLocaleTimeString()}</td><td><button className="delete-btn" onClick={() => deleteLead(lead.id)} disabled={saving}>Delete</button></td></tr>})}</tbody>
               </table></div>
             )}
           </div>
