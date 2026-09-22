@@ -605,3 +605,12 @@ body:has(.portfolio) .chat{font-family:Inter,Arial,sans-serif}body:has(.portfoli
   .portfolio-section{padding-top:50px;padding-bottom:50px}
   .portfolio-section+.portfolio-section{padding-top:42px}
 }
+
+
+/* Custom details: collapsed preview with per-file Read/Close controls */
+.custom-detail-list .custom-detail-row{align-items:flex-start}
+.custom-detail-content{flex:1;min-width:0}
+.custom-detail-content>b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.custom-detail-content>small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.custom-detail-full-content{margin-top:10px;padding:12px;background:#0b0e0a;border:1px solid #252b22;border-radius:6px;color:#c8cec4;font-size:11px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto}
+.custom-read-btn,.custom-close-btn{white-space:nowrap}
