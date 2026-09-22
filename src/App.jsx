@@ -572,7 +572,7 @@ function PublicSite() {
 
   const skills = [
     { title: "AI Chatbots & AI Agents", items: ["Build AI chatbots for business websites.","Configure business-specific knowledge, FAQs, services, policies, and customer support information.","Create lead-generation flows that collect customer inquiries.","Build chatbot dashboards for business owners to manage their AI assistant.","Integrate AI into websites to automate repetitive customer-support tasks.","Design conversational experiences that work 24/7."] },
-    { title: "Web Development", items: ["Build modern, responsive business websites.","Create professional landing pages and service websites.","Develop responsive interfaces for desktop, tablet, and mobile.","Deploy websites using modern web platforms such as Vercel."] },
+    { title: "Web Development", items: ["Build modern, responsive business websites.","Create professional landing pages and service websites.","Build and customize WordPress websites.","Develop responsive interfaces for desktop, tablet, and mobile.","Deploy websites using modern web platforms such as Vercel."] },
     { title: "AI Integration & Automation", items: ["Connect AI with websites and business workflows.","Automate customer-support and lead-generation processes.","Build practical AI solutions around a business's existing information and services."] },
     { title: "SEO & Search Visibility", items: ["On-page SEO optimization.","SEO-focused content writing.","Google Search Console setup and troubleshooting.","Sitemap and indexing issue resolution.","404 error identification and fixing.","Website content structured for search visibility."] },
   ];
