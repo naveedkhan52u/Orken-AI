@@ -606,7 +606,7 @@ function PublicSite() {
           <div className="client-service-grid">{clientServices.map((item,index)=><div key={item}><b>0{index+1}</b><p>{item}</p></div>)}</div>
         </section>
 
-        <section className="portfolio-statement"><span>APPROACH</span><h2>Practical AI, web, and SEO solutions that help businesses automate support, improve their online presence, and solve real digital problems.</h2></section>
+        <section className="portfolio-statement"><span>APPROACH</span><h3>Practical AI, web, and SEO solutions that help businesses automate support, improve their online presence, and solve real digital problems.</h3></section>
 
         <section id="contact" className="portfolio-section contact-section">
           <div className="contact-copy"><span>04 / CONTACT</span><h2>Have a digital problem to solve?</h2><p>Send the details. Your message will be added to the same Lead Generation area in the admin dashboard for follow-up.</p><div className="contact-points"><span>AI Chatbots</span><span>AI Agents</span><span>Websites</span><span>Automation</span><span>SEO</span></div></div>
