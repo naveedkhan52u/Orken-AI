@@ -611,7 +611,7 @@ function PublicSite() {
         </section>
 
         <section id="work" className="portfolio-section work-section">
-          <div className="portfolio-heading"><span>02 / PRACTICAL PROJECTS</span><h2>Projects built around real users and real problems.</h2></div>
+          <div className="portfolio-heading"><span>02 / PRACTICAL PROJECTS</span><h2>Projects built around real users and real problems.</h2><p className="projects-description">A practical portfolio of websites, AI solutions, automation workflows, and SEO work built to solve real digital needs.</p><div className="projects-count"><strong>200+</strong><span>Projects completed</span></div></div>
           <div className="project-grid">
             <article className="project-card"><div className="project-number">01</div><div>
               <span className="project-type">AI CUSTOMER SUPPORT CHATBOT</span><h3>AI Chatbot for Blog.GBBooking.com</h3>
