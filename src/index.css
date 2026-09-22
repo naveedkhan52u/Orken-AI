@@ -580,3 +580,17 @@ body:has(.portfolio) .chat{font-family:Inter,Arial,sans-serif}body:has(.portfoli
 .projects-count{display:flex;align-items:baseline;gap:12px;margin-top:24px}
 .projects-count strong{color:#2f6fed;font-size:42px;line-height:1;font-weight:800;letter-spacing:-2px}
 .projects-count span{color:#657084;font-size:11px;font-weight:700;letter-spacing:.5px}
+
+/* Skills section: compact editorial cards */
+#skills .portfolio-heading h2{font-size:clamp(25px,3vw,38px);letter-spacing:-1.6px;max-width:650px}
+#skills .portfolio-heading{margin-bottom:28px}
+#skills .skill-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#skills .skill-card{min-height:0;padding:20px;border-radius:12px;position:relative;overflow:hidden;box-shadow:0 8px 28px rgba(29,49,82,.045);transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+#skills .skill-card:hover{transform:translateY(-4px);box-shadow:0 16px 35px rgba(29,49,82,.09);border-color:#cfd9ea}
+#skills .skill-card::after{content:"";position:absolute;right:-22px;top:-22px;width:70px;height:70px;border-radius:50%;background:#edf3ff}
+#skills .skill-card>span{position:relative;z-index:1;font-size:9px;letter-spacing:1px}
+#skills .skill-card h3{position:relative;z-index:1;font-size:16px;line-height:1.25;margin:24px 0 15px;letter-spacing:-.4px}
+#skills .skill-card li{font-size:10px;line-height:1.5;padding:7px 0 7px 15px}
+#skills .skill-card li::before{width:4px;height:4px;top:13px}
+@media(max-width:1050px){#skills .skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#skills .skill-grid{grid-template-columns:1fr}#skills .skill-card h3{font-size:18px}}
