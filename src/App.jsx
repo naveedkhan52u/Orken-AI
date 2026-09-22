@@ -49,15 +49,20 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
 
   async function send(t=msg){
     const question=t.trim(); if(!question)return;
-    setItems(x=>[...x,{role:"user",text:question}]); setMsg(""); setLeadMessage("");
+    setItems(x=>[...x,{role:"user",text:question},{role:"typing",text:"Typing..."}]); setMsg(""); setLeadMessage("");
+    const typingDelay = new Promise(resolve => setTimeout(resolve, 2000));
     try{
       const {data,error}=await supabase.functions.invoke("chat-with-knowledge",{body:{message:question,history:items.slice(-6),business_id:businessId}});
       if(error)throw error;
+      await typingDelay;
       if(data?.found===false||data?.fallback===true||!data?.answer){
-        setItems(x=>[...x,{role:"ai",text:"I can only assist about Orken AI and its services. I couldn't find an answer to that question."}]);
+        setItems(x=>[...x.filter(m=>m.role!=="typing"),{role:"ai",text:"I can only assist about Orken AI and its services. I couldn't find an answer to that question."}]);
         setContactOpen(true);
-      }else setItems(x=>[...x,{role:"ai",text:data.answer}]);
-    }catch(error){setItems(x=>[...x,{role:"ai",text:"I’m unable to access the business knowledge right now."}])}
+      }else setItems(x=>[...x.filter(m=>m.role!=="typing"),{role:"ai",text:data.answer}]);
+    }catch(error){
+      await typingDelay;
+      setItems(x=>[...x.filter(m=>m.role!=="typing"),{role:"ai",text:"I’m unable to access the business knowledge right now."}]);
+    }
   }
   async function submitLead(e){
     e.preventDefault(); const f=e.currentTarget;
@@ -95,7 +100,7 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
     <button className="launcher" onClick={()=>setOpen(!open)} aria-label="Open Orken AI chat"/>
     {open&&<div className="window">
       <header><b>Orken AI</b><span>GROQ-POWERED · LIVE</span></header>
-      <main>{items.map((x,i)=><p key={i} className={x.role==="user"?"user-message":"ai-message"}>{x.text}</p>)}</main>
+      <main>{items.map((x,i)=><p key={i} className={x.role==="user"?"user-message":x.role==="typing"?"ai-message typing-message":"ai-message"}>{x.text}</p>)}</main>
       <div className="suggest"><button onClick={()=>send("What do you build?")}>What do you build?</button><button onClick={()=>send("How long does it take?")}>How long?</button></div>
       {contactOpen&&<div className="chat-contact">
         <div>Contact our team for human support</div>
@@ -538,12 +543,14 @@ function AppRouter() {
 
 function PublicSite() {
   const [contactStatus, setContactStatus] = useState("");
+  const [contactSubmitted, setContactSubmitted] = useState(false);
   const [portfolioImage, setPortfolioImage] = useState("");
   useEffect(() => { const { data } = supabase.storage.from("portfolio-images").getPublicUrl("4f779903-738c-4dfe-bcc2-201ca06253f2/profile.jpg"); setPortfolioImage(data?.publicUrl || ""); }, []);
 
   async function submitContact(e) {
     e.preventDefault();
     setContactStatus("");
+    setContactSubmitted(false);
     const form = e.currentTarget;
     const payload = {
       name: form.name.value.trim(),
@@ -559,7 +566,8 @@ function PublicSite() {
       return;
     }
     form.reset();
-    setContactStatus("Message received. Your inquiry is now in the admin Lead Generation section.");
+    setContactSubmitted(true);
+    setContactStatus("Thanks For Contacting Us");
   }
 
   const skills = [
@@ -636,7 +644,7 @@ function PublicSite() {
             <label>Email<input name="email" type="email" placeholder="you@example.com" required /></label>
             <label>WhatsApp<input name="whatsapp" placeholder="Optional" /></label>
             <label>Message<textarea name="message" rows="6" placeholder="Tell me what you want to build or fix..." required /></label>
-            <button type="submit">Send inquiry →</button>
+            <button className={contactSubmitted ? "submitted-contact-btn" : ""} type="submit" disabled={contactSubmitted}>{contactSubmitted ? "Submitted ✓" : "Send inquiry →"}</button>
             {contactStatus && <p className="contact-status">{contactStatus}</p>}
           </form>
         </section>
