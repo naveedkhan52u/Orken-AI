@@ -368,6 +368,22 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
 
   const totalLeads = leads.length;
   const newLeads = leads.filter((l) => l.status === "new").length;
+  const [embedCopied, setEmbedCopied] = useState(false);
+  const embedCode = `<script
+  src="https://orken-ai-ashy.vercel.app/chatbot.js"
+  data-business-id="${user.id}"
+  defer>
+</script>`;
+
+  async function copyEmbedCode() {
+    try {
+      await navigator.clipboard.writeText(embedCode);
+      setEmbedCopied(true);
+      setTimeout(() => setEmbedCopied(false), 1800);
+    } catch {
+      setMessage("Unable to copy embed code. Please copy it manually.");
+    }
+  }
 
   return (
     <div className="dashboard">
@@ -397,6 +413,12 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
             <div className="stat-card"><span>NEW LEADS</span><b>{newLeads}</b></div>
             <div className="stat-card"><span>KNOWLEDGE FILES</span><b>{docs.length}</b></div>
             <div className="panel"><span className="panel-label">ACCOUNT</span><h2>Admin account active</h2><p>{user.email}</p><p>Connected to the Orken AI Supabase project.</p></div>
+            <div className="panel embed-code-panel">
+              <div className="panel-top"><div><span className="panel-label">AI CHAT BOT</span><h2>Embed Code</h2></div></div>
+              <p>Add the Orken AI chatbot to your website by copying the code below and placing it before the closing <code>&lt;/body&gt;</code> tag.</p>
+              <pre className="embed-code">{embedCode}</pre>
+              <button className="embed-copy-btn" onClick={copyEmbedCode}>{embedCopied ? "Copied!" : "Copy Embed Code"}</button>
+            </div>
           </div>
         )}
 
