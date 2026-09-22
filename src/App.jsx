@@ -518,30 +518,114 @@ function AppRouter() {
 }
 
 function PublicSite() {
+  const [contactStatus, setContactStatus] = useState("");
+
+  async function submitContact(e) {
+    e.preventDefault();
+    setContactStatus("");
+    const form = e.currentTarget;
+    const payload = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      phone: form.whatsapp.value.trim() || null,
+      message: form.message.value.trim(),
+      source: "Orken AI portfolio contact form",
+      status: "new",
+    };
+    const { error } = await supabase.from("leads").insert(payload);
+    if (error) {
+      setContactStatus("Unable to submit right now. Please try again.");
+      return;
+    }
+    form.reset();
+    setContactStatus("Message received. Your inquiry is now in the admin Lead Generation section.");
+  }
+
+  const skills = [
+    { title: "AI Chatbots & AI Agents", items: ["Build AI chatbots for business websites.","Configure business-specific knowledge, FAQs, services, policies, and customer support information.","Create lead-generation flows that collect customer inquiries.","Build chatbot dashboards for business owners to manage their AI assistant.","Integrate AI into websites to automate repetitive customer-support tasks.","Design conversational experiences that work 24/7."] },
+    { title: "Web Development", items: ["Build modern, responsive business websites.","Create professional landing pages and service websites.","Develop responsive interfaces for desktop, tablet, and mobile.","Deploy websites using modern web platforms such as Vercel."] },
+    { title: "AI Integration & Automation", items: ["Connect AI with websites and business workflows.","Automate customer-support and lead-generation processes.","Build practical AI solutions around a business's existing information and services."] },
+    { title: "SEO & Search Visibility", items: ["On-page SEO optimization.","SEO-focused content writing.","Google Search Console setup and troubleshooting.","Sitemap and indexing issue resolution.","404 error identification and fixing.","Website content structured for search visibility."] },
+  ];
+  const clientServices = ["Build an AI chatbot for your business website.","Create an AI assistant trained around your business information.","Automate customer support and lead collection.","Build a professional business website.","Improve website SEO and search visibility.","Fix Google Search Console, indexing, sitemap, and 404 issues.","Connect AI, websites, and business workflows into practical solutions."];
+
   return (
     <>
-      <nav>
-        <strong>ORKEN<span>AI</span></strong>
-        <a href="#agents">Agents</a><a href="#process">Process</a><a href="#about">About</a>
+      <nav className="portfolio-nav">
+        <strong>NAVEED<span>KHAN</span></strong>
+        <a href="#skills">Skills</a><a href="#work">Work</a><a href="#services">Services</a><a href="#contact">Contact</a>
         <a className="navcta" href="/admin">Admin Login</a>
       </nav>
-      <section className="hero">
-        <div className="eyebrow">AI ENGINEERING · PRODUCTION SYSTEMS</div>
-        <h1>Production AI agents that <i>work while you sleep.</i></h1>
-        <p>Orken AI deploys intelligent agents and end-to-end workflows for support, sales, and operations.</p>
-        <a className="cta" href="mailto:hello@orken.us?subject=Orken%20AI%20Discovery%20Call">Start a discovery call →</a>
-        <div className="metrics"><b>80+<small>AGENTS DEPLOYED</small></b><b>2.4M+<small>TASKS AUTOMATED</small></b><b>94%<small>AVG. COST REDUCTION</small></b><b>24/7<small>AGENTS ONLINE</small></b></div>
-      </section>
-      <section id="agents"><div className="sectionhead"><span>01 / CAPABILITIES</span><h2>Agents built for real work.</h2></div><div className="grid">{agents.map((a, i) => <article key={a}><small>0{i + 1}</small><h3>{a}</h3><p>Production-ready AI systems designed around your business workflows, data, and customer experience.</p></article>)}</div></section>
-      <section className="aria"><div><span>LIVE AGENT</span><h2>Meet Aria.</h2><p>Orken Sales Agent. Always online, fast, and designed to qualify conversations without adding another human inbox.</p></div><div className="status">● ONLINE<br/><b>&lt;1s</b><small>RESPONSE TIME</small></div></section>
-      <section id="process"><div className="sectionhead"><span>02 / DELIVERY</span><h2>From idea to production in 4 weeks.</h2></div><div className="process">{["Discovery & eval set","Build & integrate","Shadow mode","Production launch"].map((x,i)=><div key={x}><b>0{i+1}</b><h3>{x}</h3><p>Clear milestones, measurable evaluations, and a controlled path to production.</p></div>)}</div></section>
-      <section id="about" className="about"><span>03 / ORKEN AI</span><h2>We're not a consultancy.<br/>We're an AI engineering team that ships.</h2><p>Ship-first. Eval-driven. Observable. Honest.</p></section>
-      <footer>ORKEN AI<span>Production AI agents & automation</span></footer>
+
+      <main className="portfolio">
+        <section className="portfolio-hero">
+          <div className="portfolio-hero-copy">
+            <div className="eyebrow">AI · WEB DEVELOPMENT · SEO · AUTOMATION</div>
+            <h1>I build practical <em>digital solutions</em> for real business problems.</h1>
+            <p>I build AI, web, and SEO solutions that help businesses automate support, improve their online presence, and solve real digital problems.</p>
+            <div className="hero-actions"><a className="portfolio-primary" href="#work">View practical work</a><a className="portfolio-secondary" href="#contact">Contact me</a></div>
+            <div className="hero-note">AI chatbots · Websites · Automation · SEO</div>
+          </div>
+          <div className="portfolio-hero-card">
+            <div className="hero-card-top"><span>PERSONAL PORTFOLIO</span><span>01</span></div>
+            <div className="hero-card-mark">NK</div>
+            <h2>Naveed Khan</h2>
+            <p>AI, web development, automation and SEO solutions.</p>
+            <div className="hero-card-line"><span>Focus</span><b>Practical systems</b></div>
+            <div className="hero-card-line"><span>Approach</span><b>Build · Integrate · Improve</b></div>
+          </div>
+        </section>
+
+        <section id="skills" className="portfolio-section">
+          <div className="portfolio-heading"><span>01 / SKILLS & EXPERTISE</span><h2>Technical skills focused on useful outcomes.</h2></div>
+          <div className="skill-grid">{skills.map((skill,index)=><article className="skill-card" key={skill.title}><span>0{index+1}</span><h3>{skill.title}</h3><ul>{skill.items.map(item=><li key={item}>{item}</li>)}</ul></article>)}</div>
+        </section>
+
+        <section id="work" className="portfolio-section work-section">
+          <div className="portfolio-heading"><span>02 / PRACTICAL PROJECTS</span><h2>Projects built around real users and real problems.</h2></div>
+          <div className="project-grid">
+            <article className="project-card"><div className="project-number">01</div><div>
+              <span className="project-type">AI CUSTOMER SUPPORT CHATBOT</span><h3>AI Chatbot for Blog.GBBooking.com</h3>
+              <p>Built and deployed an AI chatbot directly on Blog.GBBooking.com to provide visitors with automated assistance based on the website's business information.</p>
+              <h4>What I implemented</h4><div className="tag-list"><span>AI chatbot</span><span>Business knowledge</span><span>FAQ responses</span><span>Lead generation</span><span>Customer support</span><span>Responsive integration</span></div>
+              <p className="project-result">This demonstrates practical experience in AI chatbot development, website integration, customer support automation, and lead generation.</p>
+              <a className="project-link" href="https://blog.gbbooking.com" target="_blank" rel="noreferrer">Visit project ↗</a>
+            </div></article>
+            <article className="project-card"><div className="project-number">02</div><div>
+              <span className="project-type">GAMING GUIDES & SEO WEBSITE</span><h3>GameFixLab.site</h3>
+              <p>Built and managed a practical gaming information and troubleshooting website focused on FPS drops, lag, high ping, overheating, crashes, and performance issues.</p>
+              <h4>What I worked on</h4><div className="tag-list"><span>Website development</span><span>SEO content</span><span>Gaming guides</span><span>On-page SEO</span><span>Search Console</span><span>Indexing</span></div>
+              <p className="project-result">The website covers gaming topics including PUBG/BGMI, Free Fire, Delta Force, Warzone and other gaming troubleshooting subjects.</p>
+              <a className="project-link" href="https://gamefixlab.site" target="_blank" rel="noreferrer">Visit project ↗</a>
+            </div></article>
+          </div>
+        </section>
+
+        <section id="services" className="portfolio-section services-section">
+          <div className="portfolio-heading"><span>03 / WHAT I CAN DO FOR CLIENTS</span><h2>From a business problem to a working digital solution.</h2></div>
+          <div className="client-service-grid">{clientServices.map((item,index)=><div key={item}><b>0{index+1}</b><p>{item}</p></div>)}</div>
+        </section>
+
+        <section className="portfolio-statement"><span>APPROACH</span><h2>Practical AI, web, and SEO solutions that help businesses automate support, improve their online presence, and solve real digital problems.</h2></section>
+
+        <section id="contact" className="portfolio-section contact-section">
+          <div className="contact-copy"><span>04 / CONTACT</span><h2>Have a digital problem to solve?</h2><p>Send the details. Your message will be added to the same Lead Generation area in the admin dashboard for follow-up.</p><div className="contact-points"><span>AI Chatbots</span><span>AI Agents</span><span>Websites</span><span>Automation</span><span>SEO</span></div></div>
+          <form className="portfolio-contact-form" onSubmit={submitContact}>
+            <label>Name<input name="name" placeholder="Your name" required /></label>
+            <label>Email<input name="email" type="email" placeholder="you@example.com" required /></label>
+            <label>WhatsApp<input name="whatsapp" placeholder="Optional" /></label>
+            <label>Message<textarea name="message" rows="6" placeholder="Tell me what you want to build or fix..." required /></label>
+            <button type="submit">Send inquiry →</button>
+            {contactStatus && <p className="contact-status">{contactStatus}</p>}
+          </form>
+        </section>
+      </main>
+
+      <footer className="portfolio-footer"><div><strong>NAVEED<span>KHAN</span></strong><p>AI · Web Development · Automation · SEO</p></div><div className="footer-links"><a href="#skills">Skills</a><a href="#work">Work</a><a href="#contact">Contact</a></div></footer>
       <Chatbot />
     </>
   );
 }
-
 export function App() {
   return <AppRouter />;
 }
