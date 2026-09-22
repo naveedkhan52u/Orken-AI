@@ -561,3 +561,6 @@ body:has(.portfolio) nav.portfolio-nav .navcta{border-color:#2f6fed;background:#
 body:has(.portfolio) .chat{font-family:Inter,Arial,sans-serif}body:has(.portfolio) .chat .launcher{background:#2f6fed;border-color:#6d9cf6}body:has(.portfolio) .chat .launcher:hover{box-shadow:0 10px 30px #2f6fed55}body:has(.portfolio) .chat .launcher::after{color:#fff}
 @media(max-width:900px){.portfolio-hero{grid-template-columns:1fr;padding-top:80px;gap:45px}.portfolio-hero-card{max-width:520px}.project-grid,.contact-section{grid-template-columns:1fr}}
 @media(max-width:700px){.portfolio-section{padding:75px 5%}.portfolio-hero{padding:75px 5% 55px}.portfolio-hero h1{letter-spacing:-2.5px}.skill-grid,.client-service-grid{grid-template-columns:1fr}.portfolio-statement{margin:10px 5%;padding:55px 7%}.portfolio-footer{display:block;padding:30px 5%}.footer-links{margin-top:20px}.project-card{grid-template-columns:1fr}}
+
+/* Portfolio statement uses a smaller H3 headline */
+.portfolio-statement h3{font-size:clamp(22px,2.7vw,34px);line-height:1.35;letter-spacing:-1px;font-weight:700;margin:18px 0 0;color:#fff}
