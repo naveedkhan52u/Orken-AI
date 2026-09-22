@@ -45,6 +45,7 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
   const [items,setItems]=useState([{role:"ai",text:"Hi, I'm Orken AI. How can I help?"}]);
   const [isListening,setIsListening]=useState(false),[voiceError,setVoiceError]=useState("");
   const [contactOpen,setContactOpen]=useState(false),[leadMessage,setLeadMessage]=useState("");
+  const [suggestedFaqs,setSuggestedFaqs]=useState([]);
   const recognitionRef=useRef(null),listeningRef=useRef(false);
 
   async function send(t=msg){
@@ -83,6 +84,13 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
     }catch{listeningRef.current=false;setIsListening(false);recognitionRef.current=null;setVoiceError("Voice input could not be started. Please try again.")}
   }
   useEffect(()=>{
+    let active=true;
+    supabase.from("faqs").select("id,question").order("created_at",{ascending:false}).limit(2).then(({data})=>{
+      if(active) setSuggestedFaqs((data||[]).filter(faq=>faq.question?.trim()));
+    });
+    return ()=>{active=false};
+  },[businessId]);
+  useEffect(()=>{
     if(!embedded) return;
     const root=document.documentElement, body=document.body;
     const previousRoot=root.style.background;
@@ -101,7 +109,7 @@ function Chatbot({ businessId = "4f779903-738c-4dfe-bcc2-201ca06253f2", embedded
     {open&&<div className="window">
       <header><b>Orken AI</b><span>GROQ-POWERED · LIVE</span></header>
       <main>{items.map((x,i)=><p key={i} className={x.role==="user"?"user-message":x.role==="typing"?"ai-message typing-message":"ai-message"}>{x.text}</p>)}</main>
-      <div className="suggest"><button onClick={()=>send("What do you build?")}>What do you build?</button><button onClick={()=>send("How long does it take?")}>How long?</button></div>
+      <div className="suggest">{suggestedFaqs.map(faq=><button key={faq.id} onClick={()=>send(faq.question)}>{faq.question}</button>)}</div>
       {contactOpen&&<div className="chat-contact">
         <div>Contact our team for human support</div>
         <form onSubmit={submitLead}>
