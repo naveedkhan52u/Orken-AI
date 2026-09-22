@@ -594,3 +594,14 @@ body:has(.portfolio) .chat{font-family:Inter,Arial,sans-serif}body:has(.portfoli
 #skills .skill-card li::before{width:4px;height:4px;top:13px}
 @media(max-width:1050px){#skills .skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#skills .skill-grid{grid-template-columns:1fr}#skills .skill-card h3{font-size:18px}}
+
+/* Tighten portfolio section spacing */
+.portfolio-hero{margin-top:-60px}
+.portfolio-section{padding-top:65px;padding-bottom:65px}
+.portfolio-section+.portfolio-section{padding-top:55px}
+.portfolio-statement{margin-top:0;margin-bottom:0}
+@media(max-width:700px){
+  .portfolio-hero{margin-top:-30px}
+  .portfolio-section{padding-top:50px;padding-bottom:50px}
+  .portfolio-section+.portfolio-section{padding-top:42px}
+}
