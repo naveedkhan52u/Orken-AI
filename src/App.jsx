@@ -189,8 +189,8 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
     if (selected.size > 5 * 1024 * 1024) { setMessage("Please choose an image smaller than 5 MB."); return; }
     setSaving(true); setMessage("");
     const ext = selected.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${user.id}/portfolio-profile-${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("portfolio-images").upload(path, selected, { contentType: selected.type, upsert: false, cacheControl: "3600" });
+    const path = `${user.id}/profile.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("portfolio-images").upload(path, selected, { contentType: selected.type, upsert: true, cacheControl: "3600" });
     if (uploadError) { setMessage(uploadError.message); setSaving(false); return; }
     const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(path);
     const imageUrl = urlData.publicUrl;
@@ -539,7 +539,7 @@ function AppRouter() {
 function PublicSite() {
   const [contactStatus, setContactStatus] = useState("");
   const [portfolioImage, setPortfolioImage] = useState("");
-  useEffect(() => { supabase.from("profiles").select("portfolio_image_url").limit(1).maybeSingle().then(({ data }) => setPortfolioImage(data?.portfolio_image_url || "")); }, []);
+  useEffect(() => { const { data } = supabase.storage.from("portfolio-images").getPublicUrl("4f779903-738c-4dfe-bcc2-201ca06253f2/profile.jpg"); setPortfolioImage(data?.publicUrl || ""); }, []);
 
   async function submitContact(e) {
     e.preventDefault();
