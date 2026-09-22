@@ -170,6 +170,7 @@ const [services, setServices] = useState([]);
   const [customDetails, setCustomDetails] = useState([]);
   const [customDetailForm, setCustomDetailForm] = useState({ id: null, file_name: "", content: "" });
   const [customDetailEditorOpen, setCustomDetailEditorOpen] = useState(false);
+  const [openCustomDetailId, setOpenCustomDetailId] = useState(null);
 const [serviceForm, setServiceForm] = useState({ id: null, name: "", description: "" });
   const [faqForm, setFaqForm] = useState({ id: null, question: "", answer: "" });
   const [saving, setSaving] = useState(false);
@@ -518,7 +519,7 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
               )}
               {message && <p className="form-message">{message}</p>}
             </div>
-            <div className="panel"><span className="panel-label">SAVED CUSTOM DETAILS</span><h2>Your files</h2>{customDetails.length === 0 ? <p className="empty">No custom details created yet.</p> : <div className="doc-list">{customDetails.map((item) => <div className="doc-row faq-row" key={item.id}><div><b>{item.file_name}</b><small>Created: {new Date(item.created_at).toLocaleString()} · Updated: {new Date(item.updated_at).toLocaleString()}</small><small>{item.content}</small></div><div className="faq-actions"><button className="edit-btn" onClick={() => { setCustomDetailForm({ id: item.id, file_name: item.file_name, content: item.content }); setCustomDetailEditorOpen(true); }}>Edit</button><button className="delete-btn" onClick={() => deleteCustomDetail(item.id)}>Delete</button></div></div>)}</div>}</div>
+            <div className="panel"><span className="panel-label">SAVED CUSTOM DETAILS</span><h2>Your files</h2>{customDetails.length === 0 ? <p className="empty">No custom details created yet.</p> : <div className="doc-list custom-detail-list">{customDetails.map((item) => { const isOpen = openCustomDetailId === item.id; return <div className={`doc-row faq-row custom-detail-row${isOpen ? " is-open" : ""}`} key={item.id}><div className="custom-detail-content"><b>{item.file_name}</b><small>Created: {new Date(item.created_at).toLocaleString()} · Updated: {new Date(item.updated_at).toLocaleString()}</small>{isOpen && <div className="custom-detail-full-content">{item.content}</div>}</div><div className="faq-actions"><button className="edit-btn" onClick={() => { setOpenCustomDetailId(null); setCustomDetailForm({ id: item.id, file_name: item.file_name, content: item.content }); setCustomDetailEditorOpen(true); }}>Edit</button>{isOpen ? <button className="delete-btn custom-close-btn" onClick={() => setOpenCustomDetailId(null)}>Close</button> : <button className="edit-btn custom-read-btn" onClick={() => setOpenCustomDetailId(item.id)}>Read</button>}<button className="delete-btn" onClick={() => deleteCustomDetail(item.id)}>Delete</button></div></div>})}</div>}</div>
           </div>
         )}
 
