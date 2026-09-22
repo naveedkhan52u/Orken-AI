@@ -149,7 +149,7 @@ function Login({ onLogin }) {
 
 function AdminDashboard({ user, onLogout }) {
   const [section, setSection] = useState("overview");
-  const [profile, setProfile] = useState({ full_name: "", email: user.email || "" });
+  const [profile, setProfile] = useState({ full_name: "", email: user.email || "", portfolio_image_url: "" });
   const [leads, setLeads] = useState([]);
   const [docs, setDocs] = useState([]);
   const [faqs, setFaqs] = useState([]);
@@ -165,14 +165,14 @@ const [serviceForm, setServiceForm] = useState({ id: null, name: "", description
 
   async function loadDashboard() {
     const [{ data: p }, { data: l }, { data: d }, { data: f }, { data: s }, { data: cd }] = await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", user.id).single(),
+      supabase.from("profiles").select("full_name,portfolio_image_url").eq("id", user.id).single(),
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       supabase.from("knowledge_documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("faqs").select("*").order("created_at", { ascending: false }),
 supabase.from("services").select("*").order("created_at", { ascending: false }),
       supabase.from("custom_details").select("*").order("created_at", { ascending: false }),
     ]);
-    setProfile({ full_name: p?.full_name || "", email: user.email || "" });
+    setProfile({ full_name: p?.full_name || "", email: user.email || "", portfolio_image_url: p?.portfolio_image_url || "" });
     setLeads(l || []);
     setDocs(d || []);
     setFaqs(f || []);
@@ -181,6 +181,25 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
   }
 
   useEffect(() => { loadDashboard(); }, [user.id]);
+
+  async function uploadPortfolioImage(e) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!selected.type.startsWith("image/")) { setMessage("Please select an image file."); return; }
+    if (selected.size > 5 * 1024 * 1024) { setMessage("Please choose an image smaller than 5 MB."); return; }
+    setSaving(true); setMessage("");
+    const ext = selected.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/portfolio-profile-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("portfolio-images").upload(path, selected, { contentType: selected.type, upsert: false, cacheControl: "3600" });
+    if (uploadError) { setMessage(uploadError.message); setSaving(false); return; }
+    const { data: urlData } = supabase.storage.from("portfolio-images").getPublicUrl(path);
+    const imageUrl = urlData.publicUrl;
+    const { error: profileError } = await supabase.from("profiles").update({ portfolio_image_url: imageUrl, updated_at: new Date().toISOString() }).eq("id", user.id);
+    if (profileError) { setMessage(profileError.message); setSaving(false); return; }
+    setProfile((p) => ({ ...p, portfolio_image_url: imageUrl }));
+    setMessage("Portfolio image updated.");
+    setSaving(false);
+  }
 
   async function saveProfile(e) {
     e.preventDefault();
@@ -491,7 +510,7 @@ supabase.from("services").select("*").order("created_at", { ascending: false }),
         )}
 
         {section === "profile" && (
-          <div className="panel profile-panel"><span className="panel-label">ACCOUNT</span><h2>Profile Settings</h2><form onSubmit={saveProfile}><label>Full name<input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></label><label>Email<input value={profile.email} disabled /></label><button className="auth-submit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button></form>{message && <p className="form-message">{message}</p>}</div>
+          <div className="panel profile-panel"><span className="panel-label">PERSONAL PORTFOLIO</span><h2>Profile Settings</h2><form onSubmit={saveProfile}><label>Full name<input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></label><label>Email<input value={profile.email} disabled /></label><label>Portfolio Profile Image<input type="file" accept="image/*" onChange={uploadPortfolioImage} disabled={saving} /></label>{profile.portfolio_image_url && <div className="portfolio-image-preview"><img src={profile.portfolio_image_url} alt="Portfolio profile preview" /><span>Shown in the circular portfolio profile area.</span></div>}<button className="auth-submit" disabled={saving}>{saving ? "Saving..." : "Save profile"}</button></form>{message && <p className="form-message">{message}</p>}</div>
         )}
       </main>
     </div>
@@ -519,6 +538,8 @@ function AppRouter() {
 
 function PublicSite() {
   const [contactStatus, setContactStatus] = useState("");
+  const [portfolioImage, setPortfolioImage] = useState("");
+  useEffect(() => { supabase.from("profiles").select("portfolio_image_url").limit(1).maybeSingle().then(({ data }) => setPortfolioImage(data?.portfolio_image_url || "")); }, []);
 
   async function submitContact(e) {
     e.preventDefault();
@@ -568,7 +589,7 @@ function PublicSite() {
           </div>
           <div className="portfolio-hero-card">
             <div className="hero-card-top"><span>PERSONAL PORTFOLIO</span><span>01</span></div>
-            <div className="hero-card-mark">NK</div>
+            {portfolioImage ? <img className="portfolio-profile-image" src={portfolioImage} alt="Naveed Khan" /> : <div className="hero-card-mark">NK</div>}
             <h2>Naveed Khan</h2>
             <p>AI, web development, automation and SEO solutions.</p>
             <div className="hero-card-line"><span>Focus</span><b>Practical systems</b></div>
